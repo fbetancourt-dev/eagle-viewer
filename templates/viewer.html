@@ -203,6 +203,15 @@
             cursor: pointer;
         }
 
+        /* Restricción de selección por cara activa: bloquear interacción en cara opuesta */
+        #pcbSvg[data-preset="top"] [data-side="bottom"],
+        #pcbSvg[data-preset="top"] [data-side="bottom"] *,
+        #pcbSvg[data-preset="bottom"] [data-side="top"],
+        #pcbSvg[data-preset="bottom"] [data-side="top"] * {
+            pointer-events: none !important;
+            cursor: default !important;
+        }
+
         /* 60 FPS puros: desactivar todo el hit-testing ÚNICAMENTE durante el arrastre (pan activo) */
         body.is-dragging,
         body.is-dragging * {
@@ -692,7 +701,7 @@
                 </div>
             </div>
             <div class="canvas-container" id="pcbContainer">
-                <svg id="pcbSvg">
+                <svg id="pcbSvg" data-preset="both">
                     <g id="pcbViewport"></g>
                 </svg>
             </div>
@@ -800,6 +809,8 @@
             resetZoom('pcb');
 
             buildLayersMenu();
+            var pcbSvg = document.getElementById("pcbSvg");
+            if (pcbSvg) pcbSvg.setAttribute("data-preset", "both");
             var pcbVp = document.getElementById("pcbViewport");
             var btnR = document.getElementById("btnRatsnest");
             if (pcbVp) pcbVp.classList.add("ratsnest-active");
@@ -1807,13 +1818,14 @@
             groupOrigins.setAttribute("class", "pcb-origins");
             viewport.appendChild(groupOrigins);
 
-            function createOriginCross(x, y, layerNum, className, dataPart) {
+            function createOriginCross(x, y, layerNum, className, dataPart, side) {
                 USED_LAYERS.add(layerNum);
                 var gCross = document.createElementNS("http://www.w3.org/2000/svg", "g");
                 var cls = "pcb-origin-cross layer-" + layerNum;
                 if (className) cls += " " + className;
                 gCross.setAttribute("class", cls);
                 if (dataPart) gCross.setAttribute("data-part", dataPart);
+                if (side) gCross.setAttribute("data-side", side);
                 
                 var arm = 0.5;
                 var l1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
@@ -2019,7 +2031,8 @@
                 var silkLayerNum = mirrored ? 22 : 21;
                 var nameLayerNum = mirrored ? 26 : 25;
                 var elemOriginLayer = mirrored ? 24 : 23;
-                var elemOriginCross = createOriginCross(elem.x, elem.y, elemOriginLayer, "interactive-part", elem.name);
+                var compSide = mirrored ? "bottom" : "top";
+                var elemOriginCross = createOriginCross(elem.x, elem.y, elemOriginLayer, "interactive-part", elem.name, compSide);
                 groupOrigins.appendChild(elemOriginCross);
 
                 if (pkg) {
@@ -2085,8 +2098,9 @@
                             if (effLayer === 1) {
                                 if (!gTopSmd) {
                                     gTopSmd = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                                    gTopSmd.setAttribute("class", "interactive-part");
+                                    gTopSmd.setAttribute("class", "interactive-part layer-1");
                                     gTopSmd.setAttribute("data-part", elem.name);
+                                    gTopSmd.setAttribute("data-side", "top");
                                     gTopSmd.setAttribute("transform", transformStr);
                                     groupTop.appendChild(gTopSmd);
                                 }
@@ -2094,8 +2108,9 @@
                             } else {
                                 if (!gBottomSmd) {
                                     gBottomSmd = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                                    gBottomSmd.setAttribute("class", "interactive-part");
+                                    gBottomSmd.setAttribute("class", "interactive-part layer-16");
                                     gBottomSmd.setAttribute("data-part", elem.name);
+                                    gBottomSmd.setAttribute("data-side", "bottom");
                                     gBottomSmd.setAttribute("transform", transformStr);
                                     groupBottom.appendChild(gBottomSmd);
                                 }
@@ -2109,6 +2124,7 @@
                         var gPads = document.createElementNS("http://www.w3.org/2000/svg", "g");
                         gPads.setAttribute("class", "interactive-part layer-17");
                         gPads.setAttribute("data-part", elem.name);
+                        gPads.setAttribute("data-side", compSide);
                         gPads.setAttribute("transform", transformStr);
                         groupPads.appendChild(gPads);
 
@@ -2198,8 +2214,9 @@
 
                     if (hasSilkGeom) {
                         var gSilk = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                        gSilk.setAttribute("class", "interactive-part");
+                        gSilk.setAttribute("class", "interactive-part layer-" + silkLayerNum);
                         gSilk.setAttribute("data-part", elem.name);
+                        gSilk.setAttribute("data-side", compSide);
                         gSilk.setAttribute("transform", transformStr);
                         groupSilk.appendChild(gSilk);
 
@@ -2234,7 +2251,8 @@
                             hitBox.setAttribute("width", pMaxX - pMinX);
                             hitBox.setAttribute("height", pMaxY - pMinY);
                             hitBox.setAttribute("fill", "transparent");
-                            hitBox.setAttribute("class", "pcb-part-hitbox");
+                            hitBox.setAttribute("class", "pcb-part-hitbox layer-" + silkLayerNum);
+                            hitBox.setAttribute("data-side", compSide);
                             hitBox.style.pointerEvents = "all";
                             hitBox.style.cursor = "pointer";
                             gSilk.appendChild(hitBox);
@@ -2289,6 +2307,7 @@
                         var aLayerNum = attr.layer ? getEffectiveLayer(attr.layer, mirrored) : (mirrored ? 26 : 25);
                         attrText.setAttribute("class", `pcb-silk-text layer-${aLayerNum} interactive-part-text`);
                         attrText.setAttribute("data-part", elem.name);
+                        attrText.setAttribute("data-side", compSide);
                         USED_LAYERS.add(aLayerNum);
 
                         applyEagleTextTransform(attrText, attr.x, attr.y, attr.rot);
@@ -2303,8 +2322,9 @@
                     });
                 } else if (pkg && pkg.texts && pkg.texts.length > 0) {
                     var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                    gText.setAttribute("class", "interactive-part-text");
+                    gText.setAttribute("class", "interactive-part-text layer-" + nameLayerNum);
                     gText.setAttribute("data-part", elem.name);
+                    gText.setAttribute("data-side", compSide);
                     gText.setAttribute("transform", transformStr);
                     groupText.appendChild(gText);
 
@@ -2362,8 +2382,9 @@
                     }
                 } else if (!elem.smashed) {
                     var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                    gText.setAttribute("class", "interactive-part-text");
+                    gText.setAttribute("class", "interactive-part-text layer-" + nameLayerNum);
                     gText.setAttribute("data-part", elem.name);
+                    gText.setAttribute("data-side", compSide);
                     gText.setAttribute("transform", transformStr);
                     groupText.appendChild(gText);
 
@@ -2448,6 +2469,43 @@
             }
         }
 
+        function isElementVisibleInSvg(el) {
+            if (!el) return false;
+            var curr = el;
+            while (curr && curr.tagName !== 'svg' && curr !== document.body) {
+                if (curr.style && curr.style.display === 'none') return false;
+                if (curr.classList) {
+                    for (var i = 0; i < curr.classList.length; i++) {
+                        var c = curr.classList[i];
+                        if (c.startsWith("layer-")) {
+                            var lNum = parseInt(c.replace("layer-", ""));
+                            var chk = document.getElementById("chkLayer" + lNum);
+                            if (chk && !chk.checked) return false;
+                        }
+                    }
+                }
+                curr = curr.parentNode;
+            }
+            return true;
+        }
+
+        function getElementLayerNum(el) {
+            if (!el) return null;
+            var curr = el;
+            while (curr && curr.tagName !== 'svg' && curr !== document.body) {
+                if (curr.classList) {
+                    for (var i = 0; i < curr.classList.length; i++) {
+                        var c = curr.classList[i];
+                        if (c.startsWith("layer-")) {
+                            return parseInt(c.replace("layer-", ""));
+                        }
+                    }
+                }
+                curr = curr.parentNode;
+            }
+            return null;
+        }
+
         function buildLayersMenu() {
             var listContainer = document.querySelector(".layer-list");
             if (!listContainer || !EAGLE_DATA.layers) return;
@@ -2493,7 +2551,7 @@
                     input.setAttribute("checked", "true");
                 }
                 input.onchange = function() {
-                    toggleLayer(num);
+                    toggleLayer(num, true);
                 };
 
                 var spanNum = document.createElement("span");
@@ -2518,11 +2576,11 @@
 
                 listContainer.appendChild(label);
 
-                toggleLayer(num);
+                toggleLayer(num, false);
             });
         }
 
-        function toggleLayer(layerNum) {
+        function toggleLayer(layerNum, isUserAction) {
             var chk = document.getElementById("chkLayer" + layerNum);
             if (!chk) return;
             var checked = chk.checked;
@@ -2531,6 +2589,19 @@
             });
             if (layerNum === 23 || layerNum === 24) {
                 updateOriginsBtnState();
+            }
+            if (isUserAction) {
+                document.querySelectorAll("#btnPresetTop, #btnPresetBottom, #btnPresetBoth").forEach(function(b) {
+                    b.classList.remove("active");
+                });
+                var pcbSvg = document.getElementById("pcbSvg");
+                if (pcbSvg) {
+                    pcbSvg.setAttribute("data-preset", "custom");
+                }
+                var highlighted = document.querySelector(".highlighted");
+                if (highlighted && !isElementVisibleInSvg(highlighted)) {
+                    clearSelection();
+                }
             }
         }
 
@@ -2936,9 +3007,15 @@
         }
 
         function setPcbPreset(preset) {
+            clearSelection();
             document.querySelectorAll("#btnPresetTop, #btnPresetBottom, #btnPresetBoth").forEach(function(b) {
                 b.classList.remove("active");
             });
+
+            var pcbSvg = document.getElementById("pcbSvg");
+            if (pcbSvg) {
+                pcbSvg.setAttribute("data-preset", preset);
+            }
 
             var topLayers = new Set([1, 17, 18, 20, 21, 23, 25, 27, 45, 51]);
             var bottomLayers = new Set([16, 17, 18, 20, 22, 24, 26, 28, 45, 52]);
@@ -3093,6 +3170,37 @@
                 if (hitPart) {
                     var partName = hitPart.getAttribute('data-part');
                     if (partName) {
+                        if (type === "pcb") {
+                            // 1. Validar que el elemento clickeado esté visible en SVG
+                            if (!isElementVisibleInSvg(e.target)) {
+                                clearSelection();
+                                return;
+                            }
+
+                            // 2. Restricción por cara activa (Top vs Bottom presets)
+                            var currentPreset = svg.getAttribute("data-preset") || (document.getElementById("btnPresetTop") && document.getElementById("btnPresetTop").classList.contains("active") ? "top" : (document.getElementById("btnPresetBottom") && document.getElementById("btnPresetBottom").classList.contains("active") ? "bottom" : "both"));
+                            var partSide = hitPart.getAttribute("data-side");
+
+                            if (currentPreset === "top" && partSide === "bottom") {
+                                clearSelection();
+                                return;
+                            }
+                            if (currentPreset === "bottom" && partSide === "top") {
+                                clearSelection();
+                                return;
+                            }
+
+                            // 3. Restricción por capa para capas intermedias / personalizadas
+                            var targetLayer = getElementLayerNum(e.target);
+                            if (targetLayer !== null) {
+                                var chk = document.getElementById("chkLayer" + targetLayer);
+                                if (chk && !chk.checked) {
+                                    clearSelection();
+                                    return;
+                                }
+                            }
+                        }
+
                         var pVal = "";
                         if (type === "pcb" && EAGLE_DATA.board && EAGLE_DATA.board.elements) {
                             var pe = EAGLE_DATA.board.elements.find(e => e.name === partName);
