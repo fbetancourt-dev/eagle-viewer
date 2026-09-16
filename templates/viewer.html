@@ -1,0 +1,1805 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eagle Hardware Visualizer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #050506;
+            --panel-bg: #111113;
+            --accent-color: #6c5ce7;
+            --text-color: #e4e4e7;
+            --text-muted: #a1a1aa;
+            --border-color: #1e1e24;
+            
+            /* Colores Esquemático Clásico de Eagle (Fondo Blanco) */
+            --sch-bg: #ffffff;
+            --sch-wire: #008000; /* Verde Nets */
+            --sch-part: #800000; /* Rojo/Marrón Símbolos */
+            --sch-pin: #800000;
+            --sch-text: #000000; /* Texto/Valores */
+            --sch-part-label: #800000;
+            
+            /* Colores PCB */
+            --pcb-bg: #09090b; /* Fondo fuera de la placa */
+            --pcb-top: #ef4444; /* Capa 1 Top - Rojo */
+            --pcb-bottom: #3b82f6; /* Capa 16 Bottom - Azul */
+            --pcb-pad: #eab308; /* Oro / Latón */
+            --pcb-silk: #f8fafc; /* Blanco Serigrafía */
+            --pcb-dim: #10b981; /* Dimensión */
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        header {
+            background-color: var(--panel-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 12px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 60px;
+        }
+
+        header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        header h1 span {
+            color: var(--accent-color);
+        }
+
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        main {
+            flex: 1;
+            display: flex;
+            height: calc(100vh - 60px);
+        }
+
+        .panel {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .panel:last-child {
+            border-right: none;
+        }
+
+        .panel-header {
+            background-color: var(--panel-bg);
+            padding: 8px 16px;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+            font-size: 0.9rem;
+            z-index: 10;
+        }
+
+        .panel-controls {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn {
+            background: #1e1b4b;
+            border: 1px solid #312e81;
+            color: var(--text-color);
+            padding: 4px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        .btn:hover {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+        
+        .btn.active {
+            background: var(--accent-color);
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px rgba(108, 92, 231, 0.4);
+        }
+
+        .canvas-container {
+            flex: 1;
+            position: relative;
+            background-color: var(--sch-bg);
+            cursor: grab;
+            overflow: hidden;
+        }
+
+        .canvas-container:active {
+            cursor: grabbing;
+        }
+
+        #pcbContainer {
+            background-color: var(--pcb-bg);
+        }
+
+        svg {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* Estilos de elementos SVG */
+        .sch-wire {
+            stroke: var(--sch-wire);
+            stroke-width: 0.4;
+            fill: none;
+            stroke-linecap: round;
+        }
+        .sch-junction {
+            fill: var(--sch-wire);
+        }
+        .sch-part-wire {
+            stroke: var(--sch-part);
+            stroke-width: 0.3;
+            fill: none;
+            stroke-linecap: round;
+        }
+        .sch-text, .sch-part-label {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.3px;
+            fill: #374151;
+        }
+        .sch-part-label {
+            fill: #800000;
+            font-weight: bold;
+            font-size: 1.5px;
+        }
+        .sch-part-rect {
+            stroke: var(--sch-part);
+            stroke-width: 0.3;
+            fill: #80000010;
+        }
+        .sch-part-circle {
+            stroke: var(--sch-part);
+            stroke-width: 0.3;
+            fill: none;
+        }
+        .sch-pin-line {
+            stroke: var(--sch-pin);
+            stroke-width: 0.3;
+        }
+        .sch-origin-cross {
+            stroke: #94a3b8;
+            stroke-width: 0.15;
+            opacity: 0.75;
+            pointer-events: none;
+        }
+        
+        .sch-plain-wire {
+            stroke: #990000;
+            stroke-width: 0.25;
+            fill: none;
+            stroke-linecap: round;
+        }
+        .sch-plain-text {
+            font-family: "Courier New", Courier, monospace;
+            font-size: 1.5px;
+            fill: #990000;
+        }
+        .sch-plain-circle {
+            stroke: #990000;
+            stroke-width: 0.25;
+            fill: none;
+        }
+        .sch-plain-rect {
+            stroke: #990000;
+            stroke-width: 0.25;
+            fill: none;
+        }
+        .sch-plain-polygon {
+            fill: #99000030;
+            stroke: #990000;
+            stroke-width: 0.25;
+        }
+
+        /* Estilos PCB */
+        .pcb-dim-wire {
+            stroke: var(--pcb-silk);
+            stroke-width: 0.3;
+            fill: none;
+            opacity: 0.4;
+            stroke-linecap: round;
+        }
+        .pcb-wire-top {
+            stroke: var(--pcb-top);
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            opacity: 0.9;
+        }
+        .pcb-wire-bottom {
+            stroke: var(--pcb-bottom);
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            fill: none;
+            opacity: 0.9;
+        }
+        .pcb-silk-wire {
+            stroke: var(--pcb-silk);
+            stroke-width: 0.15;
+            fill: none;
+            opacity: 0.6;
+            stroke-linecap: round;
+        }
+        .pcb-silk-poly {
+            fill: var(--pcb-silk);
+            opacity: 0.4;
+        }
+        
+        /* ESTADO SIN RATSNEST (Por defecto): Contorno punteado clásico de Eagle CAD */
+        .pcb-poly-top {
+            fill: none;
+            stroke: var(--pcb-top);
+            stroke-width: 0.25;
+            stroke-dasharray: 0.6 0.6;
+            opacity: 0.8;
+        }
+        .pcb-poly-bottom {
+            fill: none;
+            stroke: var(--pcb-bottom);
+            stroke-width: 0.25;
+            stroke-dasharray: 0.6 0.6;
+            opacity: 0.8;
+        }
+        
+        /* ESTADO CON RATSNEST (Activado dinámicamente): Relleno translúcido de cobre GND */
+        .ratsnest-active .pcb-poly-top {
+            fill: var(--pcb-top);
+            fill-opacity: 0.15;
+            stroke: none;
+        }
+        .ratsnest-active .pcb-poly-bottom {
+            fill: var(--pcb-bottom);
+            fill-opacity: 0.15;
+            stroke: none;
+        }
+        
+        .pcb-pad-smd-top {
+            fill: var(--pcb-top);
+            stroke: var(--pcb-pad);
+            stroke-width: 0.1;
+        }
+        .pcb-pad-smd-bottom {
+            fill: var(--pcb-bottom);
+            stroke: var(--pcb-pad);
+            stroke-width: 0.1;
+        }
+        .pcb-pad-thru {
+            fill: var(--pcb-pad);
+            stroke: #d97706;
+            stroke-width: 0.15;
+        }
+        .pcb-pad-hole {
+            fill: #09090b; /* Coincide con el fondo de la pantalla para simular taladro vacío */
+        }
+        .pcb-via {
+            fill: var(--pcb-pad);
+            stroke: #b45309;
+            stroke-width: 0.1;
+        }
+        .pcb-via-hole {
+            fill: #111827; /* Coincide con el FR4 de fondo */
+        }
+        .pcb-silk-text {
+            fill: var(--pcb-silk);
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8px;
+        }
+
+        /* Resaltados (Cross-probing) de Alta Fidelidad Vectorial */
+        .interactive-part {
+            cursor: pointer;
+        }
+        .interactive-part:hover path,
+        .interactive-part:hover line,
+        .interactive-part:hover rect,
+        .interactive-part:hover circle {
+            stroke: var(--accent-color) !important;
+            stroke-width: 0.35px !important;
+        }
+        .highlighted path,
+        .highlighted line,
+        .highlighted rect,
+        .highlighted circle {
+            stroke: #fbbf24 !important; /* Amarillo brillante de selección estilo Eagle CAD */
+            stroke-width: 0.45px !important;
+        }
+        
+        .highlighted-bg {
+            fill: rgba(251, 191, 36, 0.2) !important;
+            stroke: #fbbf24 !important;
+            stroke-width: 0.45px !important;
+        }
+
+        /* Diálogo de selección de Capas (Display) */
+        .layer-dialog {
+            position: absolute;
+            bottom: 16px;
+            right: 16px;
+            background: rgba(20, 20, 23, 0.95);
+            border: 1px solid var(--border-color);
+            padding: 16px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            font-size: 0.85rem;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            width: 270px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+
+        .layer-dialog-title {
+            font-weight: 600;
+            font-size: 0.9rem;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin-bottom: 4px;
+            color: var(--accent-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .layer-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            max-height: 240px;
+            overflow-y: auto;
+            padding-right: 6px;
+        }
+
+        .layer-list::-webkit-scrollbar {
+            width: 4px;
+        }
+        .layer-list::-webkit-scrollbar-thumb {
+            background-color: var(--border-color);
+            border-radius: 4px;
+        }
+
+        .layer-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background 0.2s ease;
+        }
+
+        .layer-item:hover {
+            background: #ffffff05;
+        }
+
+        .layer-item input {
+            cursor: pointer;
+        }
+
+        .layer-num {
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: 500;
+            color: var(--text-muted);
+            width: 25px;
+            text-align: right;
+            font-size: 0.8rem;
+        }
+
+        .layer-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
+        }
+
+        .layer-name {
+            font-family: 'Outfit', sans-serif;
+            color: var(--text-color);
+            font-size: 0.8rem;
+        }
+
+        .info-panel {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            background: rgba(20, 20, 23, 0.9);
+            border: 1px solid var(--border-color);
+            padding: 12px 16px;
+            border-radius: 8px;
+            backdrop-filter: blur(8px);
+            font-size: 0.85rem;
+            z-index: 100;
+            pointer-events: none;
+            max-width: 250px;
+            display: none;
+        }
+        
+        .info-title {
+            font-weight: 600;
+            color: var(--accent-color);
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Eagle <span>Hardware Visualizer</span></h1>
+        <div class="subtitle" id="boardName">Cargando circuito...</div>
+    </header>
+
+    <main>
+        <!-- Panel Esquemático -->
+        <div class="panel" style="background-color: var(--sch-bg);">
+            <div class="panel-header">
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="color: var(--text-muted);">Esquemático:</span>
+                    <select id="sheetSelect" class="btn" style="background: #1e1b4b; border: 1px solid #312e81; color: #a5b4fc; font-weight: bold; cursor: pointer; padding: 2px 6px;" onchange="changeSheet(this.value)">
+                        <option value="0">Hoja 1 / 1</option>
+                    </select>
+                </div>
+                <div class="panel-controls">
+                    <button class="btn" onclick="prevSheet()" title="Hoja anterior">◀</button>
+                    <button class="btn" onclick="nextSheet()" title="Hoja siguiente">▶</button>
+                    <button class="btn" onclick="resetZoom('sch')">Centrar</button>
+                </div>
+            </div>
+            <div class="canvas-container" id="schContainer" style="background-color: var(--sch-bg);">
+                <svg id="schSvg">
+                    <g id="schViewport"></g>
+                </svg>
+            </div>
+            <div class="info-panel" id="schInfoPanel" style="background: rgba(255, 255, 255, 0.95); border-color: #d1d5db; color: #1f2937;">
+                <div class="info-title" id="infoPartName" style="color: var(--sch-part);">Componente</div>
+                <div id="infoPartDetails">Valor: -</div>
+            </div>
+        </div>
+
+        <!-- Panel PCB -->
+        <div class="panel">
+            <div class="panel-header">
+                <div>Placa de Circuito Impreso (PCB)</div>
+                <div class="panel-controls">
+                    <button class="btn" id="btnRatsnest" onclick="toggleRatsnest()">Ratsnest: OFF</button>
+                    <button class="btn" onclick="resetZoom('pcb')">Centrar</button>
+                </div>
+            </div>
+            <div class="canvas-container" id="pcbContainer">
+                <svg id="pcbSvg">
+                    <g id="pcbViewport"></g>
+                </svg>
+            </div>
+            
+            <!-- Diálogo Flotante de Capas (Display) -->
+            <div class="layer-dialog">
+                <div class="layer-dialog-title">
+                    <span>Display Layers</span>
+                    <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Eagle CAD</span>
+                </div>
+                <div class="layer-list">
+                    <!-- Se genera dinámicamente con JavaScript -->
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        var EAGLE_DATA = /*EAGLE_DATA_PLACEHOLDER*/;
+
+        var viewStates = {
+            sch: { x: 0, y: 0, scale: 2, dragging: false, startX: 0, startY: 0 },
+            pcb: { x: 0, y: 0, scale: 6, dragging: false, startX: 0, startY: 0 }
+        };
+
+        var currentSheetIndex = 0;
+        var USED_LAYERS = new Set();
+        var ratsnestActive = false; // Por defecto inicia sin aplicar Ratsnest (como Eagle)
+
+        function getActiveSheet() {
+            if (EAGLE_DATA && EAGLE_DATA.schematic && EAGLE_DATA.schematic.sheets && EAGLE_DATA.schematic.sheets.length > 0) {
+                if (currentSheetIndex >= EAGLE_DATA.schematic.sheets.length) {
+                    currentSheetIndex = 0;
+                }
+                return EAGLE_DATA.schematic.sheets[currentSheetIndex];
+            }
+            return EAGLE_DATA.schematic;
+        }
+
+        function buildSheetMenu() {
+            var select = document.getElementById("sheetSelect");
+            if (!select) return;
+            select.innerHTML = "";
+            var sheets = (EAGLE_DATA.schematic && EAGLE_DATA.schematic.sheets) ? EAGLE_DATA.schematic.sheets : [];
+            if (sheets.length === 0) {
+                var opt = document.createElement("option");
+                opt.value = 0;
+                opt.textContent = "Hoja 1 / 1";
+                select.appendChild(opt);
+            } else {
+                sheets.forEach(function(s, idx) {
+                    var opt = document.createElement("option");
+                    opt.value = idx;
+                    opt.textContent = "Hoja " + s.number + " / " + sheets.length;
+                    select.appendChild(opt);
+                });
+            }
+            select.value = currentSheetIndex;
+        }
+
+        function changeSheet(idx) {
+            currentSheetIndex = parseInt(idx, 10);
+            renderSchematic();
+            resetZoom('sch');
+        }
+
+        function prevSheet() {
+            var sheets = (EAGLE_DATA.schematic && EAGLE_DATA.schematic.sheets) ? EAGLE_DATA.schematic.sheets : [];
+            if (sheets.length <= 1) return;
+            currentSheetIndex = (currentSheetIndex - 1 + sheets.length) % sheets.length;
+            document.getElementById("sheetSelect").value = currentSheetIndex;
+            renderSchematic();
+            resetZoom('sch');
+        }
+
+        function nextSheet() {
+            var sheets = (EAGLE_DATA.schematic && EAGLE_DATA.schematic.sheets) ? EAGLE_DATA.schematic.sheets : [];
+            if (sheets.length <= 1) return;
+            currentSheetIndex = (currentSheetIndex + 1) % sheets.length;
+            document.getElementById("sheetSelect").value = currentSheetIndex;
+            renderSchematic();
+            resetZoom('sch');
+        }
+
+        window.onload = function() {
+            if (!EAGLE_DATA) {
+                console.error("No se encontraron datos del circuito.");
+                document.getElementById("boardName").innerText = "Error al cargar los datos.";
+                return;
+            }
+            
+            document.getElementById("boardName").innerText = "Circuito: " + (EAGLE_DATA.name || "test_circuit");
+            
+            buildSheetMenu();
+            renderSchematic();
+            renderBoard();
+            
+            setupInteraction('schSvg', 'schViewport', 'sch');
+            setupInteraction('pcbSvg', 'pcbViewport', 'pcb');
+            
+            resetZoom('sch');
+            resetZoom('pcb');
+
+            buildLayersMenu();
+        };
+
+        // Conmutar el cálculo/relleno del Ratsnest
+        function toggleRatsnest() {
+            var viewport = document.getElementById("pcbViewport");
+            var btn = document.getElementById("btnRatsnest");
+            ratsnestActive = !ratsnestActive;
+            
+            if (ratsnestActive) {
+                viewport.classList.add("ratsnest-active");
+                btn.classList.add("active");
+                btn.innerText = "Ratsnest: ON";
+            } else {
+                viewport.classList.remove("ratsnest-active");
+                btn.classList.remove("active");
+                btn.innerText = "Ratsnest: OFF";
+            }
+        }
+
+        function createSvgWire(w, defaultClass) {
+            // Solo los cables de red (sch-wire) se limitan a 0.25 de ancho.
+            // Los wires de símbolo (sch-part-wire) usan su ancho real (e.g. SJ1 pads = 1.27).
+            function resolveStrokeW(width) {
+                if (!width) return null;
+                return (defaultClass === "sch-wire") ? Math.min(width, 0.25) : width;
+            }
+
+            if (w.curve) {
+                var x1 = w.x1;
+                var y1 = -w.y1;
+                var x2 = w.x2;
+                var y2 = -w.y2;
+                
+                var arcAngle = w.curve * Math.PI / 180.0;
+                var length = Math.sqrt(Math.pow(x2-x1, 2.0) + Math.pow(y2-y1, 2.0));
+                
+                if (Math.abs(Math.sin(arcAngle / 2.0)) < 0.001) {
+                    var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    line.setAttribute("x1", w.x1);
+                    line.setAttribute("y1", -w.y1);
+                    line.setAttribute("x2", w.x2);
+                    line.setAttribute("y2", -w.y2);
+                    line.setAttribute("class", defaultClass);
+                    return line;
+                }
+                
+                var rotAngle = Math.atan2(y2-y1, x2-x1) * 180.0 / Math.PI;
+                var radius = Math.abs(length / Math.sin(arcAngle / 2.0)) / 2.0;
+                
+                var largeArc = (Math.abs(w.curve) > 180.0) ? '1' : '0';
+                // Eagle CW (curve<0) → SVG CW (sweep=1). Negating y preserves rotational direction.
+                var sweep = (w.curve < 0.0) ? '1' : '0';
+                
+                var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                path.setAttribute("d", `M ${x1} ${y1} A ${radius} ${radius} ${rotAngle} ${largeArc} ${sweep} ${x2} ${y2}`);
+                path.setAttribute("class", defaultClass);
+                var strokeW = resolveStrokeW(w.width);
+                if (strokeW) path.style.strokeWidth = strokeW;
+                // cap="flat" en Eagle → stroke-linecap: butt (default SVG, pero lo forzamos)
+                path.style.strokeLinecap = (w.cap === "round") ? "round" : "butt";
+                path.style.fill = "none";
+                return path;
+            } else {
+                var line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                line.setAttribute("x1", w.x1);
+                line.setAttribute("y1", -w.y1);
+                line.setAttribute("x2", w.x2);
+                line.setAttribute("y2", -w.y2);
+                line.setAttribute("class", defaultClass);
+                var strokeW = resolveStrokeW(w.width);
+                if (strokeW) line.style.strokeWidth = strokeW;
+                return line;
+            }
+        }
+
+        function createSvgPolygon(poly, defaultClass) {
+            var points = poly.vertices.map(v => `${v.x},${-v.y}`).join(" ");
+            var polygon = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+            polygon.setAttribute("points", points);
+            polygon.setAttribute("class", defaultClass);
+            if (poly.width) polygon.style.strokeWidth = poly.width;
+            return polygon;
+        }
+
+        // Dibuja una pequeña cruz (+) en las coordenadas de origen de componentes y textos (estilo Eagle)
+        function createOriginCross(x, y, size) {
+            size = size || 0.8;
+            var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            var hLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            hLine.setAttribute("x1", x - size); hLine.setAttribute("y1", y);
+            hLine.setAttribute("x2", x + size); hLine.setAttribute("y2", y);
+            hLine.setAttribute("class", "sch-origin-cross");
+            var vLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+            vLine.setAttribute("x1", x); vLine.setAttribute("y1", y - size);
+            vLine.setAttribute("x2", x); vLine.setAttribute("y2", y + size);
+            vLine.setAttribute("class", "sch-origin-cross");
+            g.appendChild(hLine);
+            g.appendChild(vLine);
+            return g;
+        }
+
+        function createSvgFrame(f, defaultClass) {
+            var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            g.setAttribute("class", defaultClass);
+            
+            var x1 = f.x1;
+            var y1 = -f.y1;
+            var x2 = f.x2;
+            var y2 = -f.y2;
+            
+            var outer = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            outer.setAttribute("x", Math.min(x1, x2));
+            outer.setAttribute("y", Math.min(y1, y2));
+            outer.setAttribute("width", Math.abs(x2 - x1));
+            outer.setAttribute("height", Math.abs(y2 - y1));
+            outer.style.stroke = "#990000";
+            outer.style.strokeWidth = "0.3";
+            outer.style.fill = "none";
+            g.appendChild(outer);
+            
+            var margin = 4.0;
+            var ix1 = Math.min(x1, x2) + margin;
+            var iy1 = Math.min(y1, y2) + margin;
+            var iw = Math.abs(x2 - x1) - 2 * margin;
+            var ih = Math.abs(y2 - y1) - 2 * margin;
+            
+            var inner = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+            inner.setAttribute("x", ix1);
+            inner.setAttribute("y", iy1);
+            inner.setAttribute("width", iw);
+            inner.setAttribute("height", ih);
+            inner.style.stroke = "#990000";
+            inner.style.strokeWidth = "0.15";
+            inner.style.fill = "none";
+            g.appendChild(inner);
+            
+            var colWidth = iw / f.columns;
+            for (var c = 1; c < f.columns; c++) {
+                var cx = ix1 + c * colWidth;
+                var colLineTop = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                colLineTop.setAttribute("x1", cx);
+                colLineTop.setAttribute("y1", Math.min(y1, y2));
+                colLineTop.setAttribute("x2", cx);
+                colLineTop.setAttribute("y2", iy1);
+                colLineTop.style.stroke = "#990000";
+                colLineTop.style.strokeWidth = "0.15";
+                g.appendChild(colLineTop);
+                
+                var colLineBot = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                colLineBot.setAttribute("x1", cx);
+                colLineBot.setAttribute("y1", Math.max(y1, y2) - margin);
+                colLineBot.setAttribute("x2", cx);
+                colLineBot.setAttribute("y2", Math.max(y1, y2));
+                colLineBot.style.stroke = "#990000";
+                colLineBot.style.strokeWidth = "0.15";
+                g.appendChild(colLineBot);
+            }
+            
+            for (var c = 0; c < f.columns; c++) {
+                var cx = ix1 + c * colWidth + colWidth / 2;
+                var tNumTop = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                tNumTop.setAttribute("x", cx);
+                tNumTop.setAttribute("y", Math.min(y1, y2) + margin / 2 + 0.8);
+                tNumTop.setAttribute("text-anchor", "middle");
+                tNumTop.style.fontFamily = '"Courier New", Courier, monospace';
+                tNumTop.style.fontSize = "2.0px";
+                tNumTop.style.fill = "#990000";
+                tNumTop.textContent = (c + 1);
+                g.appendChild(tNumTop);
+                
+                var tNumBot = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                tNumBot.setAttribute("x", cx);
+                tNumBot.setAttribute("y", Math.max(y1, y2) - margin / 2 + 0.8);
+                tNumBot.setAttribute("text-anchor", "middle");
+                tNumBot.style.fontFamily = '"Courier New", Courier, monospace';
+                tNumBot.style.fontSize = "2.0px";
+                tNumBot.style.fill = "#990000";
+                tNumBot.textContent = (c + 1);
+                g.appendChild(tNumBot);
+            }
+            
+            var rowHeight = ih / f.rows;
+            for (var r = 1; r < f.rows; r++) {
+                var cy = iy1 + r * rowHeight;
+                var rowLineLeft = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                rowLineLeft.setAttribute("x1", Math.min(x1, x2));
+                rowLineLeft.setAttribute("y1", cy);
+                rowLineLeft.setAttribute("x2", ix1);
+                rowLineLeft.setAttribute("y2", cy);
+                rowLineLeft.style.stroke = "#990000";
+                rowLineLeft.style.strokeWidth = "0.15";
+                g.appendChild(rowLineLeft);
+                
+                var rowLineRight = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                rowLineRight.setAttribute("x1", Math.max(x1, x2) - margin);
+                rowLineRight.setAttribute("y1", cy);
+                rowLineRight.setAttribute("x2", Math.max(x1, x2));
+                rowLineRight.setAttribute("y2", cy);
+                rowLineRight.style.stroke = "#990000";
+                rowLineRight.style.strokeWidth = "0.15";
+                g.appendChild(rowLineRight);
+            }
+            
+            var alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+            for (var r = 0; r < f.rows; r++) {
+                var cy = iy1 + r * rowHeight + rowHeight / 2 + 0.8;
+                var letter = alphabet[r] || "?";
+                
+                var tLetLeft = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                tLetLeft.setAttribute("x", Math.min(x1, x2) + margin / 2);
+                tLetLeft.setAttribute("y", cy);
+                tLetLeft.setAttribute("text-anchor", "middle");
+                tLetLeft.style.fontFamily = '"Courier New", Courier, monospace';
+                tLetLeft.style.fontSize = "2.0px";
+                tLetLeft.style.fill = "#990000";
+                tLetLeft.textContent = letter;
+                g.appendChild(tLetLeft);
+                
+                var tLetRight = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                tLetRight.setAttribute("x", Math.max(x1, x2) - margin / 2);
+                tLetRight.setAttribute("y", cy);
+                tLetRight.setAttribute("text-anchor", "middle");
+                tLetRight.style.fontFamily = '"Courier New", Courier, monospace';
+                tLetRight.style.fontSize = "2.0px";
+                tLetRight.style.fill = "#990000";
+                tLetRight.textContent = letter;
+                g.appendChild(tLetRight);
+            }
+            
+            return g;
+        }
+
+        function renderSchematic() {
+            var viewport = document.getElementById("schViewport");
+            viewport.innerHTML = "";
+            
+            var activeSheet = getActiveSheet();
+
+            // 1. Crear las capas principales estructuradas en orden de apilamiento (z-index)
+            var layerFrame = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            layerFrame.setAttribute("id", "sch-layer-frame");
+            viewport.appendChild(layerFrame);
+            
+            var layerComponents = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            layerComponents.setAttribute("id", "sch-layer-components");
+            viewport.appendChild(layerComponents);
+            
+            var layerNets = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            layerNets.setAttribute("id", "sch-layer-nets");
+            viewport.appendChild(layerNets);
+            
+            var layerTexts = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            layerTexts.setAttribute("id", "sch-layer-texts");
+            viewport.appendChild(layerTexts);
+            
+            // 2. Renderizar Capa 1: Frame / Plain de la hoja (textos de anotación, tablas, etc.)
+            if (activeSheet.plain) {
+                activeSheet.plain.forEach(item => {
+                    if (item.type === "wire") {
+                        var el = createSvgWire(item, "sch-plain-wire");
+                        layerFrame.appendChild(el);
+                    } else if (item.type === "text") {
+                        var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute("x", item.x);
+                        text.setAttribute("y", -item.y);
+                        text.setAttribute("class", "sch-plain-text");
+                        text.style.fontSize = `${item.size}px`;
+                        text.style.fontFamily = '"Courier New", Courier, monospace';
+                        text.style.fill = "#990000";
+                        
+                        var lines = item.text.split("\n");
+                        lines.forEach((lineStr, idx) => {
+                            var tspan = document.createElementNS("http://www.w3.org/2000/svg", "tspan");
+                            tspan.setAttribute("x", item.x);
+                            if (idx > 0) {
+                                tspan.setAttribute("dy", `${item.size * 1.2}px`);
+                            }
+                            tspan.textContent = lineStr;
+                            text.appendChild(tspan);
+                        });
+                        layerFrame.appendChild(text);
+                        // Cruz (+) en el anclaje del texto — Eagle lo muestra en todos los textos
+                        layerFrame.appendChild(createOriginCross(item.x, -item.y, 0.6));
+                    } else if (item.type === "circle") {
+                        var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", item.x);
+                        circle.setAttribute("cy", -item.y);
+                        circle.setAttribute("r", item.radius);
+                        circle.setAttribute("class", "sch-plain-circle");
+                        layerFrame.appendChild(circle);
+                    } else if (item.type === "rectangle") {
+                        var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", Math.min(item.x1, item.x2));
+                        rect.setAttribute("y", -Math.max(item.y1, item.y2));
+                        rect.setAttribute("width", Math.abs(item.x2 - item.x1));
+                        rect.setAttribute("height", Math.abs(item.y2 - item.y1));
+                        rect.setAttribute("class", "sch-plain-rect");
+                        layerFrame.appendChild(rect);
+                    } else if (item.type === "polygon") {
+                        var el = createSvgPolygon(item, "sch-plain-polygon");
+                        layerFrame.appendChild(el);
+                    }
+                });
+            }
+            
+            // 3. Renderizar Capa 2: Nets y Junctions (Cables de conexión)
+            if (activeSheet.nets) {
+                activeSheet.nets.forEach(net => {
+                    net.wires.forEach(w => {
+                        var el = createSvgWire(w, "sch-wire");
+                        layerNets.appendChild(el);
+                    });
+                    net.junctions.forEach(j => {
+                        var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", j.x);
+                        circle.setAttribute("cy", -j.y);
+                        circle.setAttribute("r", 0.7);
+                        circle.setAttribute("class", "sch-junction");
+                        layerNets.appendChild(circle);
+                    });
+                    
+                    if (net.labels) {
+                        net.labels.forEach(lbl => {
+                            var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                            text.setAttribute("x", lbl.x);
+                            text.setAttribute("y", -lbl.y);
+                            text.setAttribute("class", "sch-net-label");
+                            text.style.fontFamily = '"Courier New", Courier, monospace';
+                            text.style.fontSize = `${lbl.size || 1.778}px`;
+                            text.style.fill = "#990000"; // En Eagle clásico los labels son del mismo color que los pines
+                            text.style.fontWeight = "bold";
+                            text.setAttribute("text-anchor", "start");
+                            
+                            var lAngle = getRotationAngle(lbl.rot);
+                            var transformStr = "";
+                            if (lAngle !== 0) {
+                                transformStr = `rotate(${-lAngle}, ${lbl.x}, ${-lbl.y})`;
+                            }
+                            
+                            // Ajustar offset para que queden encima de la línea
+                            if (lAngle === 0) {
+                                text.setAttribute("y", -lbl.y - 0.5);
+                            } else if (lAngle === 90) {
+                                text.setAttribute("x", lbl.x - 0.5);
+                                transformStr = `rotate(-90, ${lbl.x}, ${-lbl.y})`;
+                            }
+                            
+                            if (transformStr) {
+                                text.setAttribute("transform", transformStr);
+                            }
+                            
+                            text.textContent = net.name;
+                            layerNets.appendChild(text);
+                        });
+                    }
+                });
+            }
+
+            // 4. Renderizar Capa 3 y 4: Componentes y sus textos asociados
+            if (activeSheet.instances) {
+                activeSheet.instances.forEach(inst => {
+                var symKey = `${inst.library}_${inst.symbol}`;
+                var sym = EAGLE_DATA.schematic.symbols[symKey] || lookupSymbol(inst.symbol);
+                
+                var angle = getRotationAngle(inst.rot);
+                var mirrored = isMirrored(inst.rot);
+                var gx = inst.gate_x || 0;
+                var gy = inst.gate_y || 0;
+                
+                var transformStr = `translate(${inst.x}, ${-inst.y}) `;
+                if (mirrored) {
+                    transformStr += `scale(-1, 1) `;
+                }
+                transformStr += `rotate(${-angle})`;
+
+                // Grupo gráfico en capa de componentes
+                var gComp = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                gComp.setAttribute("class", "interactive-part");
+                gComp.setAttribute("data-part", inst.part);
+                gComp.setAttribute("transform", transformStr);
+                
+                var gCompSub = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                gCompSub.setAttribute("transform", `translate(0, 0)`);
+                gComp.appendChild(gCompSub);
+                layerComponents.appendChild(gComp);
+ 
+                // Grupo de texto en capa de textos
+                var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                gText.setAttribute("class", "interactive-part-text");
+                gText.setAttribute("data-part", inst.part);
+                gText.setAttribute("transform", transformStr);
+                
+                var gTextSub = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                gTextSub.setAttribute("transform", `translate(0, 0)`);
+                gText.appendChild(gTextSub);
+                layerTexts.appendChild(gText);
+                
+                if (sym) {
+                    if (sym.frames) {
+                        sym.frames.forEach(f => {
+                            var el = createSvgFrame(f, "sch-frame-group");
+                            gCompSub.appendChild(el);
+                        });
+                    }
+                    
+                    sym.wires.forEach(w => {
+                        var el = createSvgWire(w, "sch-part-wire");
+                        gCompSub.appendChild(el);
+                    });
+                    
+                    sym.rectangles.forEach(r => {
+                        var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", Math.min(r.x1, r.x2));
+                        rect.setAttribute("y", -Math.max(r.y1, r.y2));
+                        rect.setAttribute("width", Math.abs(r.x2 - r.x1));
+                        rect.setAttribute("height", Math.abs(r.y2 - r.y1));
+                        rect.setAttribute("class", "sch-part-rect");
+                        gCompSub.appendChild(rect);
+                    });
+                    
+                    sym.circles.forEach(c => {
+                        var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", c.x);
+                        circle.setAttribute("cy", -c.y);
+                        circle.setAttribute("r", c.radius);
+                        circle.setAttribute("class", "sch-part-circle");
+                        gCompSub.appendChild(circle);
+                    });
+ 
+                    sym.pins.forEach(p => {
+                        var pLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                        var len = getPinLength(p.length);
+                        pLine.setAttribute("x1", p.x);
+                        pLine.setAttribute("y1", -p.y);
+                        
+                        var pinAngle = getRotationAngle(p.rot);
+                        var isDot = p.function && p.function.includes("dot");
+                        var lineLen = isDot ? Math.max(0, len - 0.8) : len;
+                        
+                        var dx = lineLen * Math.cos(pinAngle * Math.PI / 180);
+                        var dy = lineLen * Math.sin(pinAngle * Math.PI / 180);
+                        pLine.setAttribute("x2", p.x + dx);
+                        pLine.setAttribute("y2", -p.y - dy);
+                        pLine.setAttribute("class", "sch-pin-line");
+                        gCompSub.appendChild(pLine);
+ 
+                        if (isDot) {
+                            var dotCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                            var dotDx = len * Math.cos(pinAngle * Math.PI / 180);
+                            var dotDy = len * Math.sin(pinAngle * Math.PI / 180);
+                            dotCircle.setAttribute("cx", p.x + dotDx);
+                            dotCircle.setAttribute("cy", -p.y - dotDy);
+                            dotCircle.setAttribute("r", 0.7);
+                            dotCircle.setAttribute("class", "sch-part-circle");
+                            dotCircle.style.fill = "#ffffff";
+                            gCompSub.appendChild(dotCircle);
+                        }
+
+                        // Dibujar nombre de pin si visible es "pin" o "both"
+                        var visible = p.visible || "both";
+                        if (p.name && (visible === "pin" || visible === "both")) {
+                            var pinText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                            
+                            var dirX = Math.cos(pinAngle * Math.PI / 180.0);
+                            var dirY = Math.sin(pinAngle * Math.PI / 180.0);
+                            
+                            // Colocar extremo interior + margen
+                            var textDist = len + 1.0;
+                            var tx = p.x + textDist * dirX;
+                            var ty = p.y + textDist * dirY;
+                            
+                            pinText.setAttribute("x", tx);
+                            pinText.setAttribute("y", -ty + 0.4); // Centrado vertical relativo
+                            pinText.style.fontFamily = '"Courier New", Courier, monospace';
+                            pinText.style.fontSize = "1.1px";
+                            pinText.style.fill = "#374151"; // Gris oscuro para nombre de pines
+                            
+                            if (Math.abs(dirX - 1.0) < 0.01) { // R0 (Pin apunta a derecha, interior derecha)
+                                pinText.setAttribute("text-anchor", "start");
+                            } else if (Math.abs(dirX + 1.0) < 0.01) { // R180 (Pin apunta a izquierda, interior izquierda)
+                                pinText.setAttribute("text-anchor", "end");
+                            } else if (Math.abs(dirY - 1.0) < 0.01) { // R90 (Pin apunta arriba, interior arriba)
+                                pinText.setAttribute("text-anchor", "start");
+                                pinText.setAttribute("transform", `rotate(-90, ${tx}, ${-ty})`);
+                                pinText.setAttribute("y", -ty + 0.2);
+                            } else if (Math.abs(dirY + 1.0) < 0.01) { // R270 (Pin apunta abajo, interior abajo)
+                                pinText.setAttribute("text-anchor", "end");
+                                pinText.setAttribute("transform", `rotate(-90, ${tx}, ${-ty})`);
+                                pinText.setAttribute("y", -ty + 0.2);
+                            }
+                            
+                            pinText.textContent = p.name;
+                            gCompSub.appendChild(pinText);
+                        }
+                    });
+
+                    // Cruz de origen del componente (en el origen local = (0,0) del símbolo)
+                    gCompSub.appendChild(createOriginCross(0, 0, 0.9));
+ 
+                    sym.texts.forEach(t => {
+                        var val = t.text;
+                        var valUpper = val.toUpperCase();
+                        
+                        // Sustituir marcadores dinámicos
+                        var isNameText = valUpper === ">NAME";
+                        var isValueText = valUpper === ">VALUE";
+                        if (isNameText) {
+                            val = inst.part;
+                        } else if (isValueText) {
+                            val = inst.value;
+                        } else if (valUpper === ">DRAWING_NAME") {
+                            val = EAGLE_DATA.name || "usb_c_charger";
+                        } else if (valUpper === ">LAST_DATE_TIME") {
+                            val = "7/17/26 6:07 PM";
+                        } else if (valUpper === ">SHEET") {
+                            val = "Sheet: 1/1";
+                        } else if (valUpper === ">AUTHOR") {
+                            val = "K. TOWNSEND";
+                        }
+                        
+                        // Determinar si este texto fue sobreescrito (smashed) con posición/tamaño absolutos
+                        var smashKey = isNameText ? "NAME" : (isValueText ? "VALUE" : null);
+                        var sattr = smashKey && inst.smashed && inst.smashed_attrs && inst.smashed_attrs[smashKey];
+                        
+                        var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute("class", isNameText ? "sch-part-label" : "sch-text");
+                        
+                        if (sattr) {
+                            // Texto smashed: coordenadas absolutas en el espacio del esquema
+                            // Se coloca directamente en layerTexts (sin transformación de instancia)
+                            var ax = sattr.x;
+                            var ay = -sattr.y;
+                            text.setAttribute("x", ax);
+                            text.setAttribute("y", ay);
+                            var sAngle = getRotationAngle(sattr.rot);
+                            if (sAngle !== 0) {
+                                text.setAttribute("transform", `rotate(${-sAngle}, ${ax}, ${ay})`);
+                            }
+                            text.style.fontSize = sattr.size + "px";
+                            text.textContent = val;
+                            layerTexts.appendChild(text);
+                            // Cruz en la posición absoluta del texto smashed
+                            layerTexts.appendChild(createOriginCross(ax, ay, 0.6));
+                        } else {
+                            // Texto del símbolo: coordenadas locales (bajo la transformación del grupo)
+                            text.setAttribute("x", t.x);
+                            text.setAttribute("y", -t.y);
+                            
+                            var tAngle = getRotationAngle(t.rot);
+                            var transformTextStr = "";
+                            if (mirrored) {
+                                transformTextStr += `translate(${t.x}, ${-t.y}) scale(-1, 1) translate(${-t.x}, ${t.y}) `;
+                            }
+                            if (angle !== 0) {
+                                transformTextStr += `translate(${t.x}, ${-t.y}) rotate(${angle}) translate(${-t.x}, ${t.y}) `;
+                            }
+                            if (tAngle !== 0) {
+                                transformTextStr += `translate(${t.x}, ${-t.y}) rotate(${-tAngle}) translate(${-t.x}, ${t.y}) `;
+                            }
+                            if (transformTextStr !== "") {
+                                text.setAttribute("transform", transformTextStr.trim());
+                            }
+                            text.textContent = val;
+                            gTextSub.appendChild(text);
+                            // Cruz en el origen local del texto del símbolo
+                            gTextSub.appendChild(createOriginCross(t.x, -t.y, 0.6));
+                        }
+                    });
+                } else {
+                    var box = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                    box.setAttribute("x", -5);
+                    box.setAttribute("y", -5);
+                    box.setAttribute("width", 10);
+                    box.setAttribute("height", 10);
+                    box.setAttribute("class", "sch-part-rect");
+                    gCompSub.appendChild(box);
+                    
+                    var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", 0);
+                    text.setAttribute("y", -7);
+                    text.setAttribute("class", "sch-part-label");
+                    text.textContent = inst.part;
+                    gTextSub.appendChild(text);
+                    gCompSub.appendChild(createOriginCross(0, 0, 0.9));
+                }
+                
+                gComp.onclick = function() {
+                    highlightPart(inst.part, inst.value);
+                };
+                gText.onclick = function() {
+                    highlightPart(inst.part, inst.value);
+                };
+            });
+            }
+        }
+
+        function renderBoard() {
+            var viewport = document.getElementById("pcbViewport");
+            viewport.innerHTML = "";
+            USED_LAYERS.clear();
+
+            var minX = 9999, maxX = -9999, minY = 9999, maxY = -9999;
+            EAGLE_DATA.board.dimension.forEach(d => {
+                minX = Math.min(minX, d.x1, d.x2);
+                maxX = Math.max(maxX, d.x1, d.x2);
+                minY = Math.min(minY, d.y1, d.y2);
+                maxY = Math.max(maxY, d.y1, d.y2);
+            });
+
+            if (minX < maxX) {
+                var substrate = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                substrate.setAttribute("x", minX);
+                substrate.setAttribute("y", -maxY);
+                substrate.setAttribute("width", maxX - minX);
+                substrate.setAttribute("height", maxY - minY);
+                substrate.setAttribute("rx", 1.2);
+                substrate.setAttribute("ry", 1.2);
+                substrate.setAttribute("fill", "#111827");
+                substrate.setAttribute("stroke", "#374151");
+                substrate.setAttribute("stroke-width", 0.3);
+                substrate.setAttribute("class", "layer-20");
+                viewport.appendChild(substrate);
+                USED_LAYERS.add(20);
+            }
+
+            EAGLE_DATA.board.dimension.forEach(d => {
+                var el = createSvgWire(d, "pcb-dim-wire layer-20");
+                viewport.appendChild(el);
+                USED_LAYERS.add(20);
+            });
+
+            // Capa 16 Bottom Polygons (azul)
+            EAGLE_DATA.board.signals.forEach(sig => {
+                if (sig.polygons) {
+                    sig.polygons.forEach(poly => {
+                        if (poly.layer === 16) {
+                            var el = createSvgPolygon(poly, "pcb-poly-bottom layer-16");
+                            viewport.appendChild(el);
+                            USED_LAYERS.add(16);
+                        }
+                    });
+                }
+            });
+
+            // Capa 1 Top Polygons (rojo)
+            EAGLE_DATA.board.signals.forEach(sig => {
+                if (sig.polygons) {
+                    sig.polygons.forEach(poly => {
+                        if (poly.layer === 1) {
+                            var el = createSvgPolygon(poly, "pcb-poly-top layer-1");
+                            viewport.appendChild(el);
+                            USED_LAYERS.add(1);
+                        }
+                    });
+                }
+            });
+
+            // Capa 16 Bottom Tracks (azul)
+            EAGLE_DATA.board.signals.forEach(sig => {
+                sig.wires.forEach(w => {
+                    if (w.layer === 16) {
+                        var el = createSvgWire(w, "pcb-wire-bottom layer-16");
+                        viewport.appendChild(el);
+                        USED_LAYERS.add(16);
+                    }
+                });
+            });
+
+            // Capa 1 Top Tracks (rojo)
+            EAGLE_DATA.board.signals.forEach(sig => {
+                sig.wires.forEach(w => {
+                    if (w.layer === 1) {
+                        var el = createSvgWire(w, "pcb-wire-top layer-1");
+                        viewport.appendChild(el);
+                        USED_LAYERS.add(1);
+                    }
+                });
+            });
+
+            // Capa 18 Vías
+            EAGLE_DATA.board.signals.forEach(sig => {
+                sig.vias.forEach(v => {
+                    var viaGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    viaGroup.setAttribute("class", "layer-18");
+                    
+                    var outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    outer.setAttribute("cx", v.x);
+                    outer.setAttribute("cy", -v.y);
+                    outer.setAttribute("r", v.diameter / 2);
+                    outer.setAttribute("class", "pcb-via");
+                    
+                    var inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    inner.setAttribute("cx", v.x);
+                    inner.setAttribute("cy", -v.y);
+                    inner.setAttribute("r", v.drill / 2);
+                    inner.setAttribute("class", "pcb-via-hole");
+                    
+                    viaGroup.appendChild(outer);
+                    viaGroup.appendChild(inner);
+                    viewport.appendChild(viaGroup);
+                    USED_LAYERS.add(18);
+                });
+            });
+
+            // Elementos planos libres (Plain) en cualquier capa (logos bitmaps, textos de autor, marcas, etc.)
+            if (EAGLE_DATA.board.plain) {
+                EAGLE_DATA.board.plain.forEach(item => {
+                    var layerClass = "layer-" + item.layer;
+                    USED_LAYERS.add(item.layer);
+
+                    if (item.type === "wire") {
+                        var defaultStyle = "pcb-silk-wire";
+                        if (item.layer === 1) defaultStyle = "pcb-wire-top";
+                        else if (item.layer === 16) defaultStyle = "pcb-wire-bottom";
+                        
+                        var el = createSvgWire(item, `${defaultStyle} ${layerClass}`);
+                        viewport.appendChild(el);
+                    }
+                    else if (item.type === "polygon") {
+                        var defaultStyle = "pcb-silk-poly";
+                        if (item.layer === 1) defaultStyle = "pcb-poly-top";
+                        else if (item.layer === 16) defaultStyle = "pcb-poly-bottom";
+                        
+                        var el = createSvgPolygon(item, `${defaultStyle} ${layerClass}`);
+                        viewport.appendChild(el);
+                    }
+                    else if (item.type === "circle") {
+                        var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", item.x);
+                        circle.setAttribute("cy", -item.y);
+                        circle.setAttribute("r", item.radius);
+                        circle.setAttribute("class", `pcb-silk-wire ${layerClass}`);
+                        viewport.appendChild(circle);
+                    }
+                    else if (item.type === "rectangle") {
+                        var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", Math.min(item.x1, item.x2));
+                        rect.setAttribute("y", -Math.max(item.y1, item.y2));
+                        rect.setAttribute("width", Math.abs(item.x2 - item.x1));
+                        rect.setAttribute("height", Math.abs(item.y2 - item.y1));
+                        rect.setAttribute("class", `pcb-silk-poly ${layerClass}`);
+                        viewport.appendChild(rect);
+                    }
+                    else if (item.type === "text") {
+                        var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        text.setAttribute("x", item.x);
+                        text.setAttribute("y", -item.y);
+                        text.setAttribute("class", `pcb-silk-text ${layerClass}`);
+                        
+                        var tAngle = getRotationAngle(item.rot);
+                        if (tAngle !== 0) {
+                            text.setAttribute("transform", `rotate(${-tAngle}, ${item.x}, ${-item.y})`);
+                        }
+                        text.textContent = item.text;
+                        viewport.appendChild(text);
+                    }
+                });
+            }
+
+            // Capa 17 Pads Pasantes y Serigrafía de Componentes
+            EAGLE_DATA.board.elements.forEach(elem => {
+                var pkgKey = `${elem.library}_${elem.package}`;
+                var pkg = EAGLE_DATA.board.packages[pkgKey];
+
+                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                g.setAttribute("class", "interactive-part");
+                g.setAttribute("data-part", elem.name);
+
+                var angle = getRotationAngle(elem.rot);
+                var mirrored = isMirrored(elem.rot);
+                var transformStr = `translate(${elem.x}, ${-elem.y}) `;
+                if (mirrored) {
+                    transformStr += `scale(-1, 1) `;
+                }
+                transformStr += `rotate(${-angle})`;
+                g.setAttribute("transform", transformStr);
+
+                var silkLayerNum = mirrored ? 22 : 21;
+                var nameLayerNum = mirrored ? 26 : 25;
+                var silkLayer = "layer-" + silkLayerNum;
+                var nameLayer = "layer-" + nameLayerNum;
+
+                if (pkg) {
+                    if (pkg.polygons) {
+                        pkg.polygons.forEach(poly => {
+                            var el = createSvgPolygon(poly, `pcb-silk-poly ${silkLayer}`);
+                            g.appendChild(el);
+                            USED_LAYERS.add(silkLayerNum);
+                        });
+                    }
+
+                    pkg.wires.forEach(w => {
+                        var el = createSvgWire(w, `pcb-silk-wire ${silkLayer}`);
+                        g.appendChild(el);
+                        USED_LAYERS.add(silkLayerNum);
+                    });
+                    
+                    pkg.circles.forEach(c => {
+                        var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        circle.setAttribute("cx", c.x);
+                        circle.setAttribute("cy", -c.y);
+                        circle.setAttribute("r", c.radius);
+                        circle.setAttribute("class", `pcb-silk-wire ${silkLayer}`);
+                        g.appendChild(circle);
+                        USED_LAYERS.add(silkLayerNum);
+                    });
+
+                    pkg.smds.forEach(s => {
+                        var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        rect.setAttribute("x", s.x - s.dx / 2);
+                        rect.setAttribute("y", -s.y - s.dy / 2);
+                        rect.setAttribute("width", s.dx);
+                        rect.setAttribute("height", s.dy);
+                        
+                        var layerNum = s.layer === 1 ? 1 : 16;
+                        var smdClass = s.layer === 1 ? "pcb-pad-smd-top layer-1" : "pcb-pad-smd-bottom layer-16";
+                        rect.setAttribute("class", smdClass);
+                        USED_LAYERS.add(layerNum);
+                        
+                        var smdAngle = getRotationAngle(s.rot);
+                        if (smdAngle !== 0) {
+                            rect.setAttribute("transform", `rotate(${-smdAngle}, ${s.x}, ${-s.y})`);
+                        }
+                        g.appendChild(rect);
+                    });
+
+                    pkg.pads.forEach(p => {
+                        var padGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        padGroup.setAttribute("class", "layer-17");
+                        var diameter = p.diameter || (p.drill * 1.6);
+                        var outer;
+                        
+                        if (p.shape === "square") {
+                            outer = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                            outer.setAttribute("x", p.x - diameter / 2);
+                            outer.setAttribute("y", -p.y - diameter / 2);
+                            outer.setAttribute("width", diameter);
+                            outer.setAttribute("height", diameter);
+                            outer.setAttribute("class", "pcb-pad-thru");
+                        } else if (p.shape === "octagonal") {
+                            outer = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                            var r = diameter / 2;
+                            var c = r * 0.414;
+                            var pts = [
+                                `${p.x - r},${-p.y - c}`,
+                                `${p.x - r},${-p.y + c}`,
+                                `${p.x - c},${-p.y + r}`,
+                                `${p.x + c},${-p.y + r}`,
+                                `${p.x + r},${-p.y + c}`,
+                                `${p.x + r},${-p.y - c}`,
+                                `${p.x + c},${-p.y - r}`,
+                                `${p.x - c},${-p.y - r}`
+                            ].join(" ");
+                            outer.setAttribute("points", pts);
+                            outer.setAttribute("class", "pcb-pad-thru");
+                        } else {
+                            outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                            outer.setAttribute("cx", p.x);
+                            outer.setAttribute("cy", -p.y);
+                            outer.setAttribute("r", diameter / 2);
+                            outer.setAttribute("class", "pcb-pad-thru");
+                        }
+                        
+                        var inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        inner.setAttribute("cx", p.x);
+                        inner.setAttribute("cy", -p.y);
+                        inner.setAttribute("r", p.drill / 2);
+                        inner.setAttribute("class", "pcb-pad-hole");
+                        
+                        padGroup.appendChild(outer);
+                        padGroup.appendChild(inner);
+                        g.appendChild(padGroup);
+                        USED_LAYERS.add(17);
+                    });
+
+                    if (pkg.holes) {
+                        pkg.holes.forEach(h => {
+                            var holeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                            holeCircle.setAttribute("cx", h.x);
+                            holeCircle.setAttribute("cy", -h.y);
+                            holeCircle.setAttribute("r", h.drill / 2);
+                            holeCircle.setAttribute("class", "pcb-pad-hole layer-45");
+                            g.appendChild(holeCircle);
+                            USED_LAYERS.add(45);
+                        });
+                    }
+
+                    var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    text.setAttribute("x", 0);
+                    text.setAttribute("y", 0);
+                    text.setAttribute("text-anchor", "middle");
+                    text.setAttribute("class", `pcb-silk-text ${nameLayer}`);
+                    if (mirrored) {
+                        text.setAttribute("transform", "scale(-1, 1)");
+                    }
+                    text.textContent = elem.name;
+                    g.appendChild(text);
+                    USED_LAYERS.add(nameLayerNum);
+                    
+                    pkg.texts.forEach(t => {
+                        var pText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        pText.setAttribute("x", t.x);
+                        pText.setAttribute("y", -t.y);
+                        
+                        var itemLayerNum = nameLayerNum;
+                        if (t.layer === 27 || t.layer === 28) {
+                            itemLayerNum = mirrored ? 28 : 27;
+                        } else if (t.layer === 22 || t.layer === 21) {
+                            itemLayerNum = mirrored ? 22 : 21;
+                        }
+                        
+                        var itemLayer = "layer-" + itemLayerNum;
+                        pText.setAttribute("class", `pcb-silk-text ${itemLayer}`);
+                        USED_LAYERS.add(itemLayerNum);
+                        
+                        var tAngle = getRotationAngle(t.rot);
+                        var transformTextStr = "";
+                        if (mirrored) {
+                            transformTextStr += "scale(-1, 1) ";
+                        }
+                        if (tAngle !== 0) {
+                            transformTextStr += `rotate(${-tAngle}, ${t.x}, ${-t.y}) `;
+                        }
+                        if (transformTextStr !== "") {
+                            pText.setAttribute("transform", transformTextStr);
+                        }
+                        
+                        var val = t.text;
+                        if (val === ">NAME" || val === ">Name" || val === ">name") val = elem.name;
+                        else if (val === ">VALUE" || val === ">Value" || val === ">value") val = elem.value;
+                        
+                        pText.textContent = val;
+                        g.appendChild(pText);
+                    });
+                }
+
+                g.onclick = function() {
+                    highlightPart(elem.name, elem.value);
+                };
+
+                viewport.appendChild(g);
+            });
+
+            // Agujeros directos en la placa (Holes)
+            if (EAGLE_DATA.board.holes) {
+                EAGLE_DATA.board.holes.forEach(h => {
+                    var holeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    holeCircle.setAttribute("cx", h.x);
+                    holeCircle.setAttribute("cy", -h.y);
+                    holeCircle.setAttribute("r", h.drill / 2);
+                    holeCircle.setAttribute("class", "pcb-pad-hole layer-45");
+                    viewport.appendChild(holeCircle);
+                    USED_LAYERS.add(45);
+                });
+            }
+        }
+
+        function buildLayersMenu() {
+            var listContainer = document.querySelector(".layer-list");
+            if (!listContainer || !EAGLE_DATA.layers) return;
+            
+            listContainer.innerHTML = "";
+
+            var layerNums = Object.keys(EAGLE_DATA.layers)
+                .map(Number)
+                .filter(num => USED_LAYERS.has(num))
+                .sort((a, b) => a - b);
+            
+            function getLayerColor(num, name) {
+                if (num === 1) return "var(--pcb-top)";
+                if (num === 16) return "var(--pcb-bottom)";
+                if (num === 17) return "var(--pcb-pad)";
+                if (num === 18) return "#b45309";
+                if (num === 20) return "#475569";
+                if (num === 21 || num === 25) return "var(--pcb-silk)";
+                if (num === 22 || num === 26) return "#cbd5e1";
+                
+                var nameLower = name.toLowerCase();
+                if (nameLower.includes("top") || nameLower.startsWith("t")) return "var(--pcb-top)";
+                if (nameLower.includes("bottom") || nameLower.startsWith("b")) return "var(--pcb-bottom)";
+                return "#475569";
+            }
+
+            layerNums.forEach(num => {
+                var layer = EAGLE_DATA.layers[num];
+                if (!layer) return;
+
+                var label = document.createElement("label");
+                label.setAttribute("class", "layer-item");
+
+                var input = document.createElement("input");
+                input.setAttribute("type", "checkbox");
+                input.setAttribute("id", "chkLayer" + num);
+                if (layer.visible) {
+                    input.setAttribute("checked", "true");
+                }
+                input.onchange = function() {
+                    toggleLayer(num);
+                };
+
+                var spanNum = document.createElement("span");
+                spanNum.setAttribute("class", "layer-num");
+                spanNum.textContent = num;
+
+                var colorBox = document.createElement("div");
+                colorBox.setAttribute("class", "layer-color");
+                colorBox.style.backgroundColor = getLayerColor(num, layer.name);
+                if (num === 21 || num === 25 || num === 22 || num === 26) {
+                    colorBox.style.border = "1px solid var(--border-color)";
+                }
+
+                var spanName = document.createElement("span");
+                spanName.setAttribute("class", "layer-name");
+                spanName.textContent = layer.name;
+
+                label.appendChild(input);
+                label.appendChild(spanNum);
+                label.appendChild(colorBox);
+                label.appendChild(spanName);
+
+                listContainer.appendChild(label);
+
+                toggleLayer(num);
+            });
+        }
+
+        function toggleLayer(layerNum) {
+            var chk = document.getElementById("chkLayer" + layerNum);
+            if (!chk) return;
+            var checked = chk.checked;
+            document.querySelectorAll(".layer-" + layerNum).forEach(el => {
+                el.style.display = checked ? "" : "none";
+            });
+        }
+
+        function highlightPart(partName, value) {
+            // Si la parte pertenece a otra hoja en el esquemático, cambiar automáticamente a esa hoja
+            if (EAGLE_DATA.schematic && EAGLE_DATA.schematic.instances) {
+                var foundInst = EAGLE_DATA.schematic.instances.find(i => i.part === partName);
+                if (foundInst && foundInst.sheet && foundInst.sheet !== (currentSheetIndex + 1)) {
+                    currentSheetIndex = foundInst.sheet - 1;
+                    buildSheetMenu();
+                    renderSchematic();
+                }
+            }
+
+            document.querySelectorAll(".highlighted").forEach(el => el.classList.remove("highlighted"));
+            document.querySelectorAll(".highlighted-bg").forEach(el => el.classList.remove("highlighted-bg"));
+
+            var elements = document.querySelectorAll(`[data-part="${partName}"]`);
+            elements.forEach(el => {
+                el.classList.add("highlighted");
+                var rect = el.querySelector(".sch-part-rect, .pcb-pad-smd-top, .pcb-pad-smd-bottom, .pcb-pad-thru");
+                if (rect) {
+                    rect.classList.add("highlighted-bg");
+                }
+            });
+
+            var infoPanel = document.getElementById("schInfoPanel");
+            var partTitle = document.getElementById("infoPartName");
+            var partDetails = document.getElementById("infoPartDetails");
+
+            partTitle.innerText = partName;
+            partDetails.innerText = "Valor: " + (value || "N/A");
+            infoPanel.style.display = "block";
+        }
+
+        function setupInteraction(svgId, viewportId, type) {
+            var svg = document.getElementById(svgId);
+            var viewport = document.getElementById(viewportId);
+            var state = viewStates[type];
+
+            function updateTransform() {
+                viewport.setAttribute("transform", `translate(${state.x}, ${state.y}) scale(${state.scale})`);
+            }
+
+            svg.addEventListener('mousedown', function(e) {
+                state.dragging = true;
+                state.startX = e.clientX - state.x;
+                state.startY = e.clientY - state.y;
+                state.clickOriginX = e.clientX;
+                state.clickOriginY = e.clientY;
+            });
+
+            window.addEventListener('mouseup', function(e) {
+                if (!state.dragging) return;
+                state.dragging = false;
+                
+                // Calcular distancia arrastrada
+                var dx = e.clientX - state.clickOriginX;
+                var dy = e.clientY - state.clickOriginY;
+                state.wasDrag = Math.sqrt(dx * dx + dy * dy) > 4;
+            });
+
+            // Clic en área vacía → deseleccionar
+            svg.addEventListener('click', function(e) {
+                // Si el mouse se movió más de 4px, fue un pan → ignorar
+                if (state.wasDrag) {
+                    state.wasDrag = false;
+                    return;
+                }
+
+                // Usar closest() para detectar si el clic fue sobre un componente
+                var hitPart = e.target.closest('.interactive-part, .interactive-part-text, .pcb-element');
+                if (!hitPart) {
+                    clearSelection();
+                }
+            });
+
+            svg.addEventListener('mousemove', function(e) {
+                if (!state.dragging) return;
+                state.x = e.clientX - state.startX;
+                state.y = e.clientY - state.startY;
+                updateTransform();
+            });
+
+            svg.addEventListener('wheel', function(e) {
+                e.preventDefault();
+                var zoomFactor = 1.1;
+                
+                var rect = svg.getBoundingClientRect();
+                var mouseX = e.clientX - rect.left;
+                var mouseY = e.clientY - rect.top;
+                
+                var oldScale = state.scale;
+                if (e.deltaY < 0) {
+                    state.scale *= zoomFactor;
+                } else {
+                    state.scale /= zoomFactor;
+                }
+                
+                state.x = mouseX - (mouseX - state.x) * (state.scale / oldScale);
+                state.y = mouseY - (mouseY - state.y) * (state.scale / oldScale);
+                
+                updateTransform();
+            });
+
+            updateTransform();
+        }
+
+        function clearSelection() {
+            document.querySelectorAll(".highlighted").forEach(el => el.classList.remove("highlighted"));
+            document.querySelectorAll(".highlighted-bg").forEach(el => el.classList.remove("highlighted-bg"));
+            var infoPanel = document.getElementById("schInfoPanel");
+            if (infoPanel) infoPanel.style.display = "none";
+        }
+
+
+        function resetZoom(type) {
+            var state = viewStates[type];
+            var svg = document.getElementById(type + 'Svg');
+            var rect = svg.getBoundingClientRect();
+            
+            state.x = rect.width / 2;
+            state.y = rect.height / 2;
+            state.scale = type === 'sch' ? 1.2 : 4.5;
+            
+            var viewport = document.getElementById(type + 'Viewport');
+            viewport.setAttribute("transform", `translate(${state.x}, ${state.y}) scale(${state.scale})`);
+        }
+
+        function getRotationAngle(rotStr) {
+            if (!rotStr) return 0;
+            var match = rotStr.match(/R(\d+)/);
+            return match ? parseInt(match[1]) : 0;
+        }
+
+        function isMirrored(rotStr) {
+            return rotStr && rotStr.includes('M');
+        }
+
+        function getPinLength(lenStr) {
+            switch(lenStr) {
+                case 'long': return 7.62;
+                case 'middle': return 5.08;
+                case 'short': return 2.54;
+                case 'point': return 0.0;
+                default: return 5.08;
+            }
+        }
+
+        function lookupSymbol(deviceset) {
+            for (var key in EAGLE_DATA.schematic.symbols) {
+                if (key.endsWith('_' + deviceset)) {
+                    return EAGLE_DATA.schematic.symbols[key];
+                }
+            }
+            return null;
+        }
+    </script>
+</body>
+</html>

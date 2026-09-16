@@ -1,0 +1,129 @@
+-------
+Legend:
+	-	Not done
+	√	Done
+	~	In progress or partly done
+	÷	Will not be done
+
+
+------
+To-do:
+
+- Find out why there are memory warnings when picking files from Dropbox
+- New board file icon
+- Nets/busses details popup
+- Hit test for nets/busses
+- Other pad shapes (incl. rotation/min/max/bounds calculations)
+- Polygon signals fill – yikes :|
+- Improve single vs. double tap on iPhone
+- Alternative to polygon fills: polygons on/off setting
+- Speed up drawing by checking for relevant rect?
+- Search: deselect all marked components
+- Fix text drawing of R270 rotated instances
+- Fix bounding rect of R270 rotated instances
+- Fix too long texts in detail popup view controller
+- UI: launch screen
+- #2: Implement search UI for iPhone (#2)
+- Add padding to auto-size bounding rect
+- Fix the goddamn zoom-to-fit!
+- #4: Support SPIN=true rotation/flipping (e.g. rotation=SMR270). Maybe add in transformContext:forRotation:
+
+
+------------------------
+In progress/partly done:
+
+~ Sheets
+~ Fix patterened (not filled) rectangles (e.g. ROV TSC)
+~ Fill patterns for layers (fill property on <layer>): http://www.raywenderlich.com/33496/core-graphics-tutorial-patterns
+
+
+-----
+Done:
+
+--- b159
+√ #5
+√ #3: don't show part FRAME1 when no file is loaded
+√ Accept <pin> without length property (#1)
+√ Hit-test: ignore components on top/bottom if relevant layer not shown
+√ Fixed initial state of toolbar buttons
+√ Fixed initial file loading
+--- b142
+√ Disable sheets picker if there is only one sheet/module or if it's a board file
+√ Fix part info popup location on iPhone
+√ Automatically open last file
+√ Placeholder view when no schematic/board is selected
+√ UI: double tap on module instance -> show module (first sheet)
+√ New Dropbox and zoom-to-fit icons
+√ UI: table separator widths on iPhone. Weird flickering? (fixed by http://stackoverflow.com/a/26643417)
+√ iOS 8: fix deprecation warnings
+√ Update to deployment target 8.0
+√ UI: space between search/sheets/layers buttons
+√ Search in instance/element values also
+√ Modules
+--- b7
+√ Update Dropbox API?
+√ Add "Unlink" to Dropbox to sign in as a different user
+√ Fix content height in Dropbox picker view controller
+√ Dropbox: fix path when loading last used path from user defaults
+√ Search for components
+√ Allow user to choose which file to open from zip archive
+√ Open board files
+√ Fixed highlight of MR90 parts (bounding rect)
+÷ Add Google Drive
+√ iPhone: Fix layers popup in portrait and when rotating
+√ Settings switch to prevent sleep (app settings bundle)
+√ Fix rotated attributes (Gift card SWD header) - turned out to be problem with 1) MR270 rotations and 2) not drawing non-attribute texts for smashed elements
+√ Dropbox caching/remember last used path
+√ Add file title label
+÷ Semi-transparent signals (color)
+√ Fix down-left jump when ending zoom
+√ Maybe fix layer order drawing completely? (draw by hardcoded layer order)
+√ Change to CATiledLayer to prevent memory issues when zooming in
+√ Fix texts on schematic elements
+√ Drawable: hole
+√ Layers: read visibility from file
+--- b6
+√ Fix text rotation for compound rotations (e.g. Thermometer schematic's L1 and L2)
+√ Fix arcs: e.g. US polarized caps (e.g. Thermometer)
+√ iPhone: full-screen view
+√ Add show/hide top/bottom layers from layers chooser view controller
+√ iPad: part popup from component
+--- b5
+√ Layers: icon, show/hide selector
+√ Auto-diameter for pads
+√ Fix order of drawing on boards: bottom signals, bottom elements, top signals, top elements
+√ Drawable: description (nope, this is info only, not a drawable)
+√ Boards: signals
+√ Drawable: via
+√ Drawable: smd
+√ Use bottom layers (place, name, value, stop, keepout, restrict etc.) for mirrored elements
+√ Drawable: pad
+√ iPhone
+√ Fix instance hit test for rotated parts (e.g. USB connector in Gift Card)
+√ Instance details popup
+√ "Placeholder" texts >DRAWING_NAME, >LAST_DATE_TIME
+√ Drawable: frame
+√ Fix pin names with @ (e.g. "GND@2")
+√ Pin names in symbols (U1 in Gift Card)
+√ Mirrored components (Q1 in Gift Card) – NB: not text
+√ Add icons to Dropbox chooser
+√ Dropbox: Display .sch files in different style
+√ Dropbox: Disable selecting non-sch files
+√ Dropbox: remember last used folder
+√ Fix zoom-to-fit (cuts off lines); add padding
+√ Zoom around pinch center
+√ Fix zoom: pinch=normal zoom; when ends, zoomScale is set (uses CATransform3D)
+√ Implement "Open in…" functionality for .sch files
+√ Implement "Open in…" functionality for .zip files
+√ Animated zoom to fit
+√ Dropbox + Document chooser
+√ Attach progress HUD to Dropbox contents table instead of window
+√ Fix loading sequence for Dropbox view controller
+√ Handle schematics with negative coordinates (offset all)
+√ Implement zoomToFit on schematic view
+√ Fix rotation of texts when instance is rotated (text should still be right side up for 180° rotations)
+√ Drawable: rectangle
+√ Arcs in net/segment/wire or bus/segment/wire
+√ Scroll
+√ Zoom
+√ Instrinsic content size on schematic view

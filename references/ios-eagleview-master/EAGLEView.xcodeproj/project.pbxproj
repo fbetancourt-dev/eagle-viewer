@@ -1,0 +1,1009 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		4711206A184E009D00BAB3B2 /* MBProgressHUD.m in Sources */ = {isa = PBXBuildFile; fileRef = 47112069184E009D00BAB3B2 /* MBProgressHUD.m */; };
+		471C0B1A1A7D251F0076C79D /* Crashlytics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 471C0B181A7D251F0076C79D /* Crashlytics.framework */; };
+		471C0B1B1A7D251F0076C79D /* Fabric.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 471C0B191A7D251F0076C79D /* Fabric.framework */; };
+		4736ABC91A6B1F970055F863 /* EAGLEDrawableModuleInstance.m in Sources */ = {isa = PBXBuildFile; fileRef = 4736ABC81A6B1F970055F863 /* EAGLEDrawableModuleInstance.m */; };
+		4736ABCC1A6B2E290055F863 /* EAGLEDrawableModulePort.m in Sources */ = {isa = PBXBuildFile; fileRef = 4736ABCB1A6B2E290055F863 /* EAGLEDrawableModulePort.m */; };
+		4739028A1840D9930092D025 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 473902891840D9930092D025 /* Foundation.framework */; };
+		4739028C1840D9930092D025 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4739028B1840D9930092D025 /* CoreGraphics.framework */; };
+		4739028E1840D9930092D025 /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 4739028D1840D9930092D025 /* UIKit.framework */; };
+		473902941840D9930092D025 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 473902921840D9930092D025 /* InfoPlist.strings */; };
+		473902961840D9930092D025 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 473902951840D9930092D025 /* main.m */; };
+		4739029A1840D9930092D025 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 473902991840D9930092D025 /* AppDelegate.m */; };
+		4739029D1840D9930092D025 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4739029B1840D9930092D025 /* Main.storyboard */; };
+		473902A01840D9930092D025 /* ViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739029F1840D9930092D025 /* ViewController.m */; };
+		473902A21840D9930092D025 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 473902A11840D9930092D025 /* Images.xcassets */; };
+		473902C11840DA180092D025 /* EAGLEObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 473902C01840DA180092D025 /* EAGLEObject.m */; };
+		473903271840DED90092D025 /* LED_resistor.brd in Resources */ = {isa = PBXBuildFile; fileRef = 473903251840DED90092D025 /* LED_resistor.brd */; };
+		473903281840DED90092D025 /* LED_resistor.sch in Resources */ = {isa = PBXBuildFile; fileRef = 473903261840DED90092D025 /* LED_resistor.sch */; };
+		473903391840E2590092D025 /* DDXMLElementAdditions.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739032C1840E2590092D025 /* DDXMLElementAdditions.m */; };
+		4739033A1840E2590092D025 /* NSString+DDXML.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739032F1840E2590092D025 /* NSString+DDXML.m */; };
+		4739033B1840E2590092D025 /* DDXMLDocument.m in Sources */ = {isa = PBXBuildFile; fileRef = 473903321840E2590092D025 /* DDXMLDocument.m */; };
+		4739033C1840E2590092D025 /* DDXMLElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 473903341840E2590092D025 /* DDXMLElement.m */; };
+		4739033D1840E2590092D025 /* DDXMLNode.m in Sources */ = {isa = PBXBuildFile; fileRef = 473903361840E2590092D025 /* DDXMLNode.m */; };
+		4739033F1840E28B0092D025 /* libxml2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 4739033E1840E28B0092D025 /* libxml2.dylib */; };
+		473903421840E4F10092D025 /* EAGLELayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 473903411840E4F10092D025 /* EAGLELayer.m */; };
+		473903451840E9430092D025 /* EAGLESchematic.m in Sources */ = {isa = PBXBuildFile; fileRef = 473903441840E9430092D025 /* EAGLESchematic.m */; };
+		473903481840ED650092D025 /* EAGLELibrary.m in Sources */ = {isa = PBXBuildFile; fileRef = 473903471840ED650092D025 /* EAGLELibrary.m */; };
+		4739034B18411D1A0092D025 /* EAGLESymbol.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739034A18411D1A0092D025 /* EAGLESymbol.m */; };
+		4739034E18411D5E0092D025 /* EAGLEDrawableObject.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739034D18411D5E0092D025 /* EAGLEDrawableObject.m */; };
+		4739035118411D7E0092D025 /* EAGLEDrawableWire.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739035018411D7E0092D025 /* EAGLEDrawableWire.m */; };
+		4739035418411D8C0092D025 /* EAGLEDrawableText.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739035318411D8C0092D025 /* EAGLEDrawableText.m */; };
+		4739035818414CB60092D025 /* EAGLEFileView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739035718414CB60092D025 /* EAGLEFileView.m */; };
+		4739035B184155530092D025 /* EAGLEDrawablePin.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739035A184155530092D025 /* EAGLEDrawablePin.m */; };
+		4739035E184343610092D025 /* EAGLEDrawablePolygon.m in Sources */ = {isa = PBXBuildFile; fileRef = 4739035D184343610092D025 /* EAGLEDrawablePolygon.m */; };
+		473903611843557A0092D025 /* Application.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 473903601843557A0092D025 /* Application.xcassets */; };
+		47452F2A1A6DB1BE00C0049A /* ModulesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 47452F291A6DB1BE00C0049A /* ModulesViewController.m */; };
+		47452F2C1A6DC0F200C0049A /* Launch Screen.xib in Resources */ = {isa = PBXBuildFile; fileRef = 47452F2B1A6DC0F200C0049A /* Launch Screen.xib */; };
+		4751137B1A71388200275407 /* empty_7.2.0.sch in Resources */ = {isa = PBXBuildFile; fileRef = 4751137A1A71388200275407 /* empty_7.2.0.sch */; };
+		4751137D1A713A9900275407 /* empty_7.2.0.brd in Resources */ = {isa = PBXBuildFile; fileRef = 4751137C1A713A9900275407 /* empty_7.2.0.brd */; };
+		4782AB6718438B120022F660 /* EAGLEInstance.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782AB6618438B120022F660 /* EAGLEInstance.m */; };
+		4782AB6A18438C6D0022F660 /* EAGLEGate.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782AB6918438C6D0022F660 /* EAGLEGate.m */; };
+		4782AB6D18438D100022F660 /* EAGLEDeviceset.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782AB6C18438D100022F660 /* EAGLEDeviceset.m */; };
+		4782AB7018439E190022F660 /* EAGLEPart.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782AB6F18439E190022F660 /* EAGLEPart.m */; };
+		4782C77D1896A50F00704F10 /* EAGLEFile.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782C77C1896A50F00704F10 /* EAGLEFile.m */; };
+		4782C7801896A87900704F10 /* EAGLEBoard.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782C77F1896A87900704F10 /* EAGLEBoard.m */; };
+		4782C785189701FB00704F10 /* EAGLEElement.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782C784189701FB00704F10 /* EAGLEElement.m */; };
+		4782C7881897039D00704F10 /* EAGLEPackage.m in Sources */ = {isa = PBXBuildFile; fileRef = 4782C7871897039D00704F10 /* EAGLEPackage.m */; };
+		4783686B1893E83D0031977E /* DetailPopupViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 4783686A1893E83D0031977E /* DetailPopupViewController.m */; };
+		4783686E1893F33A0031977E /* EAGLEInstanceView.m in Sources */ = {isa = PBXBuildFile; fileRef = 4783686D1893F33A0031977E /* EAGLEInstanceView.m */; };
+		4783687018958CE70031977E /* Main-iPhone.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 4783686F18958CE70031977E /* Main-iPhone.storyboard */; };
+		4784FF061843FE000005C290 /* EAGLENet.m in Sources */ = {isa = PBXBuildFile; fileRef = 4784FF051843FE000005C290 /* EAGLENet.m */; };
+		478889A618A27220008F8CF2 /* FastTiledLayer.m in Sources */ = {isa = PBXBuildFile; fileRef = 478889A518A27220008F8CF2 /* FastTiledLayer.m */; };
+		47A5D9AE18A190E300F2D920 /* EAGLEDrawableHole.m in Sources */ = {isa = PBXBuildFile; fileRef = 47A5D9AD18A190E300F2D920 /* EAGLEDrawableHole.m */; };
+		47AE2DD5186C5C13003054E8 /* FileIcons.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 47AE2DD4186C5C13003054E8 /* FileIcons.xcassets */; };
+		47AEE470184792ED007D5F7D /* EAGLEDrawableRectangle.m in Sources */ = {isa = PBXBuildFile; fileRef = 47AEE46F184792ED007D5F7D /* EAGLEDrawableRectangle.m */; };
+		47C3F8C2188C91CE00705CF9 /* EAGLEDrawableFrame.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C3F8C1188C91CE00705CF9 /* EAGLEDrawableFrame.m */; };
+		47C5ABB318571A0700A1D530 /* ico_schematic-64.png in Resources */ = {isa = PBXBuildFile; fileRef = 47C5ABB118571A0700A1D530 /* ico_schematic-64.png */; };
+		47C5ABB418571A0700A1D530 /* ico_schematic-320.png in Resources */ = {isa = PBXBuildFile; fileRef = 47C5ABB218571A0700A1D530 /* ico_schematic-320.png */; };
+		47C5ABC21857243800A1D530 /* ioapi.c in Sources */ = {isa = PBXBuildFile; fileRef = 47C5ABB81857243800A1D530 /* ioapi.c */; };
+		47C5ABC31857243800A1D530 /* mztools.c in Sources */ = {isa = PBXBuildFile; fileRef = 47C5ABBA1857243800A1D530 /* mztools.c */; };
+		47C5ABC41857243800A1D530 /* unzip.c in Sources */ = {isa = PBXBuildFile; fileRef = 47C5ABBC1857243800A1D530 /* unzip.c */; };
+		47C5ABC51857243800A1D530 /* zip.c in Sources */ = {isa = PBXBuildFile; fileRef = 47C5ABBE1857243800A1D530 /* zip.c */; };
+		47C5ABC61857243800A1D530 /* SSZipArchive.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C5ABC11857243800A1D530 /* SSZipArchive.m */; };
+		47C5ABC81857244700A1D530 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 47C5ABC71857244700A1D530 /* libz.dylib */; };
+		47C5ABCC18574EBE00A1D530 /* UIView+AnchorPoint.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C5ABCB18574EBE00A1D530 /* UIView+AnchorPoint.m */; };
+		47C73B61184939500041C4C4 /* DropboxSDK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 47C73B60184939500041C4C4 /* DropboxSDK.framework */; };
+		47C73B631849395C0041C4C4 /* Security.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 47C73B621849395C0041C4C4 /* Security.framework */; };
+		47C73B65184939620041C4C4 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 47C73B64184939620041C4C4 /* QuartzCore.framework */; };
+		47C73B6818493B3B0041C4C4 /* DocumentChooserViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C73B6718493B3B0041C4C4 /* DocumentChooserViewController.m */; };
+		47C73B6B18493DDB0041C4C4 /* Dropbox.m in Sources */ = {isa = PBXBuildFile; fileRef = 47C73B6A18493DDB0041C4C4 /* Dropbox.m */; };
+		47D3C2FB1898051700BB4E33 /* LayersViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3C2FA1898051700BB4E33 /* LayersViewController.m */; };
+		47D3C2FE1898096200BB4E33 /* UIImage+Color.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3C2FD1898096200BB4E33 /* UIImage+Color.m */; };
+		47D3C30118983ED300BB4E33 /* EAGLEDrawablePad.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3C30018983ED300BB4E33 /* EAGLEDrawablePad.m */; };
+		47D3C30418990D7600BB4E33 /* EAGLEDrawableSmd.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3C30318990D7600BB4E33 /* EAGLEDrawableSmd.m */; };
+		47D3C3071899460000BB4E33 /* EAGLEDrawableVia.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3C3061899460000BB4E33 /* EAGLEDrawableVia.m */; };
+		47D3C30A189947DD00BB4E33 /* EAGLESignal.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3C309189947DD00BB4E33 /* EAGLESignal.m */; };
+		47D3CD05184499B600F58240 /* EAGLEAttribute.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3CD04184499B600F58240 /* EAGLEAttribute.m */; };
+		47D3CD081844C17100F58240 /* EAGLEDrawableJunction.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3CD071844C17100F58240 /* EAGLEDrawableJunction.m */; };
+		47D3CD0B1844C46D00F58240 /* EAGLEDrawableCircle.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3CD0A1844C46D00F58240 /* EAGLEDrawableCircle.m */; };
+		47D3CD0E1845375B00F58240 /* EAGLEDrawableArc.m in Sources */ = {isa = PBXBuildFile; fileRef = 47D3CD0D1845375B00F58240 /* EAGLEDrawableArc.m */; };
+		47DF18E51A782DE800513DAA /* GPNetworkIndicator.m in Sources */ = {isa = PBXBuildFile; fileRef = 47DF18E41A782DE800513DAA /* GPNetworkIndicator.m */; };
+		47EB3A091A6B09FE00FCCBFA /* #2014-003_Powerpack.sch in Resources */ = {isa = PBXBuildFile; fileRef = 47EB3A081A6B09FE00FCCBFA /* #2014-003_Powerpack.sch */; };
+		47EB3A0C1A6B0BB100FCCBFA /* EAGLESheet.m in Sources */ = {isa = PBXBuildFile; fileRef = 47EB3A0B1A6B0BB100FCCBFA /* EAGLESheet.m */; };
+		47EB3A0F1A6B136100FCCBFA /* EAGLEModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 47EB3A0E1A6B136100FCCBFA /* EAGLEModule.m */; };
+		47EF39A218B3512400F653DD /* Settings.bundle in Resources */ = {isa = PBXBuildFile; fileRef = 47EF39A118B3512400F653DD /* Settings.bundle */; };
+		47EF39A518B39F3200F653DD /* ComponentSearchViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 47EF39A418B39F3200F653DD /* ComponentSearchViewController.m */; };
+		47EF39A718B3A3E100F653DD /* ComponentCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 47EF39A618B3A3E100F653DD /* ComponentCell.xib */; };
+		47F920F41892A1150025CF70 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 47F920F31892A1150025CF70 /* Images.xcassets */; };
+		47FC176118D9C25C008BBDB5 /* ico_board-320.png in Resources */ = {isa = PBXBuildFile; fileRef = 47FC175F18D9C25C008BBDB5 /* ico_board-320.png */; };
+		47FC176218D9C25C008BBDB5 /* ico_board-64.png in Resources */ = {isa = PBXBuildFile; fileRef = 47FC176018D9C25C008BBDB5 /* ico_board-64.png */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		47112068184E009D00BAB3B2 /* MBProgressHUD.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MBProgressHUD.h; path = EAGLEView/Views/MBProgressHUD.h; sourceTree = "<group>"; };
+		47112069184E009D00BAB3B2 /* MBProgressHUD.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = MBProgressHUD.m; path = EAGLEView/Views/MBProgressHUD.m; sourceTree = "<group>"; };
+		471C0B181A7D251F0076C79D /* Crashlytics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Crashlytics.framework; sourceTree = "<group>"; };
+		471C0B191A7D251F0076C79D /* Fabric.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = Fabric.framework; sourceTree = "<group>"; };
+		471C0B1C1A7D2CCE0076C79D /* JWJ_config.xcconfig */ = {isa = PBXFileReference; lastKnownFileType = text.xcconfig; path = JWJ_config.xcconfig; sourceTree = "<group>"; };
+		4736ABC71A6B1F970055F863 /* EAGLEDrawableModuleInstance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableModuleInstance.h; sourceTree = "<group>"; };
+		4736ABC81A6B1F970055F863 /* EAGLEDrawableModuleInstance.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableModuleInstance.m; sourceTree = "<group>"; };
+		4736ABCA1A6B2E290055F863 /* EAGLEDrawableModulePort.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableModulePort.h; sourceTree = "<group>"; };
+		4736ABCB1A6B2E290055F863 /* EAGLEDrawableModulePort.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableModulePort.m; sourceTree = "<group>"; };
+		473902861840D9930092D025 /* EAGLEView.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = EAGLEView.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		473902891840D9930092D025 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		4739028B1840D9930092D025 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = System/Library/Frameworks/CoreGraphics.framework; sourceTree = SDKROOT; };
+		4739028D1840D9930092D025 /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
+		473902911840D9930092D025 /* EAGLEView-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "EAGLEView-Info.plist"; sourceTree = "<group>"; };
+		473902931840D9930092D025 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		473902951840D9930092D025 /* main.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = main.m; sourceTree = "<group>"; };
+		473902971840D9930092D025 /* EAGLEView-Prefix.pch */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "EAGLEView-Prefix.pch"; sourceTree = "<group>"; };
+		473902981840D9930092D025 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
+		473902991840D9930092D025 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
+		4739029C1840D9930092D025 /* Base */ = {isa = PBXFileReference; lastKnownFileType = file.storyboard; name = Base; path = Base.lproj/Main.storyboard; sourceTree = "<group>"; };
+		4739029E1840D9930092D025 /* ViewController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ViewController.h; sourceTree = "<group>"; };
+		4739029F1840D9930092D025 /* ViewController.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = ViewController.m; sourceTree = "<group>"; };
+		473902A11840D9930092D025 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		473902A81840D9930092D025 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		473902BF1840DA180092D025 /* EAGLEObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEObject.h; sourceTree = "<group>"; };
+		473902C01840DA180092D025 /* EAGLEObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEObject.m; sourceTree = "<group>"; };
+		473903251840DED90092D025 /* LED_resistor.brd */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = LED_resistor.brd; sourceTree = "<group>"; };
+		473903261840DED90092D025 /* LED_resistor.sch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = LED_resistor.sch; sourceTree = "<group>"; };
+		4739032B1840E2590092D025 /* DDXMLElementAdditions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDXMLElementAdditions.h; sourceTree = "<group>"; };
+		4739032C1840E2590092D025 /* DDXMLElementAdditions.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDXMLElementAdditions.m; sourceTree = "<group>"; };
+		4739032E1840E2590092D025 /* NSString+DDXML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "NSString+DDXML.h"; sourceTree = "<group>"; };
+		4739032F1840E2590092D025 /* NSString+DDXML.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "NSString+DDXML.m"; sourceTree = "<group>"; };
+		473903301840E2590092D025 /* DDXML.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDXML.h; sourceTree = "<group>"; };
+		473903311840E2590092D025 /* DDXMLDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDXMLDocument.h; sourceTree = "<group>"; };
+		473903321840E2590092D025 /* DDXMLDocument.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDXMLDocument.m; sourceTree = "<group>"; };
+		473903331840E2590092D025 /* DDXMLElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDXMLElement.h; sourceTree = "<group>"; };
+		473903341840E2590092D025 /* DDXMLElement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDXMLElement.m; sourceTree = "<group>"; };
+		473903351840E2590092D025 /* DDXMLNode.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDXMLNode.h; sourceTree = "<group>"; };
+		473903361840E2590092D025 /* DDXMLNode.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DDXMLNode.m; sourceTree = "<group>"; };
+		473903381840E2590092D025 /* DDXMLPrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DDXMLPrivate.h; sourceTree = "<group>"; };
+		4739033E1840E28B0092D025 /* libxml2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libxml2.dylib; path = usr/lib/libxml2.dylib; sourceTree = SDKROOT; };
+		473903401840E4F10092D025 /* EAGLELayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLELayer.h; sourceTree = "<group>"; };
+		473903411840E4F10092D025 /* EAGLELayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLELayer.m; sourceTree = "<group>"; };
+		473903431840E9430092D025 /* EAGLESchematic.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLESchematic.h; sourceTree = "<group>"; };
+		473903441840E9430092D025 /* EAGLESchematic.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLESchematic.m; sourceTree = "<group>"; };
+		473903461840ED650092D025 /* EAGLELibrary.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLELibrary.h; sourceTree = "<group>"; };
+		473903471840ED650092D025 /* EAGLELibrary.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLELibrary.m; sourceTree = "<group>"; };
+		4739034918411D1A0092D025 /* EAGLESymbol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLESymbol.h; sourceTree = "<group>"; };
+		4739034A18411D1A0092D025 /* EAGLESymbol.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLESymbol.m; sourceTree = "<group>"; };
+		4739034C18411D5E0092D025 /* EAGLEDrawableObject.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableObject.h; sourceTree = "<group>"; };
+		4739034D18411D5E0092D025 /* EAGLEDrawableObject.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableObject.m; sourceTree = "<group>"; };
+		4739034F18411D7E0092D025 /* EAGLEDrawableWire.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableWire.h; sourceTree = "<group>"; };
+		4739035018411D7E0092D025 /* EAGLEDrawableWire.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableWire.m; sourceTree = "<group>"; };
+		4739035218411D8C0092D025 /* EAGLEDrawableText.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableText.h; sourceTree = "<group>"; };
+		4739035318411D8C0092D025 /* EAGLEDrawableText.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableText.m; sourceTree = "<group>"; };
+		4739035618414CB60092D025 /* EAGLEFileView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEFileView.h; sourceTree = "<group>"; };
+		4739035718414CB60092D025 /* EAGLEFileView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEFileView.m; sourceTree = "<group>"; };
+		47390359184155530092D025 /* EAGLEDrawablePin.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawablePin.h; sourceTree = "<group>"; };
+		4739035A184155530092D025 /* EAGLEDrawablePin.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawablePin.m; sourceTree = "<group>"; };
+		4739035C184343610092D025 /* EAGLEDrawablePolygon.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawablePolygon.h; sourceTree = "<group>"; };
+		4739035D184343610092D025 /* EAGLEDrawablePolygon.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawablePolygon.m; sourceTree = "<group>"; };
+		473903601843557A0092D025 /* Application.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Application.xcassets; sourceTree = "<group>"; };
+		47452F281A6DB1BE00C0049A /* ModulesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ModulesViewController.h; sourceTree = "<group>"; };
+		47452F291A6DB1BE00C0049A /* ModulesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ModulesViewController.m; sourceTree = "<group>"; };
+		47452F2B1A6DC0F200C0049A /* Launch Screen.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = "Launch Screen.xib"; sourceTree = "<group>"; };
+		4751137A1A71388200275407 /* empty_7.2.0.sch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = empty_7.2.0.sch; sourceTree = "<group>"; };
+		4751137C1A713A9900275407 /* empty_7.2.0.brd */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = empty_7.2.0.brd; sourceTree = "<group>"; };
+		4762BAF4189A667300B818F1 /* Limitations.md */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = Limitations.md; sourceTree = "<group>"; };
+		4782AB6518438B120022F660 /* EAGLEInstance.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEInstance.h; sourceTree = "<group>"; };
+		4782AB6618438B120022F660 /* EAGLEInstance.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEInstance.m; sourceTree = "<group>"; };
+		4782AB6818438C6D0022F660 /* EAGLEGate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEGate.h; sourceTree = "<group>"; };
+		4782AB6918438C6D0022F660 /* EAGLEGate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEGate.m; sourceTree = "<group>"; };
+		4782AB6B18438D100022F660 /* EAGLEDeviceset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDeviceset.h; sourceTree = "<group>"; };
+		4782AB6C18438D100022F660 /* EAGLEDeviceset.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDeviceset.m; sourceTree = "<group>"; };
+		4782AB6E18439E190022F660 /* EAGLEPart.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEPart.h; sourceTree = "<group>"; };
+		4782AB6F18439E190022F660 /* EAGLEPart.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEPart.m; sourceTree = "<group>"; };
+		4782C77B1896A50F00704F10 /* EAGLEFile.h */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEFile.h; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; wrapsLines = 1; };
+		4782C77C1896A50F00704F10 /* EAGLEFile.m */ = {isa = PBXFileReference; fileEncoding = 4; indentWidth = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEFile.m; sourceTree = "<group>"; tabWidth = 4; usesTabs = 1; wrapsLines = 1; };
+		4782C77E1896A87900704F10 /* EAGLEBoard.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEBoard.h; sourceTree = "<group>"; };
+		4782C77F1896A87900704F10 /* EAGLEBoard.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEBoard.m; sourceTree = "<group>"; };
+		4782C783189701FB00704F10 /* EAGLEElement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEElement.h; sourceTree = "<group>"; };
+		4782C784189701FB00704F10 /* EAGLEElement.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEElement.m; sourceTree = "<group>"; };
+		4782C7861897039D00704F10 /* EAGLEPackage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEPackage.h; sourceTree = "<group>"; };
+		4782C7871897039D00704F10 /* EAGLEPackage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEPackage.m; sourceTree = "<group>"; };
+		478368691893E83D0031977E /* DetailPopupViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DetailPopupViewController.h; sourceTree = "<group>"; };
+		4783686A1893E83D0031977E /* DetailPopupViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DetailPopupViewController.m; sourceTree = "<group>"; };
+		4783686C1893F33A0031977E /* EAGLEInstanceView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEInstanceView.h; sourceTree = "<group>"; };
+		4783686D1893F33A0031977E /* EAGLEInstanceView.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEInstanceView.m; sourceTree = "<group>"; };
+		4783686F18958CE70031977E /* Main-iPhone.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; path = "Main-iPhone.storyboard"; sourceTree = "<group>"; };
+		4784FF041843FE000005C290 /* EAGLENet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLENet.h; sourceTree = "<group>"; };
+		4784FF051843FE000005C290 /* EAGLENet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLENet.m; sourceTree = "<group>"; };
+		478889A418A27220008F8CF2 /* FastTiledLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FastTiledLayer.h; sourceTree = "<group>"; };
+		478889A518A27220008F8CF2 /* FastTiledLayer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FastTiledLayer.m; sourceTree = "<group>"; };
+		47A5D9AC18A190E300F2D920 /* EAGLEDrawableHole.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableHole.h; sourceTree = "<group>"; };
+		47A5D9AD18A190E300F2D920 /* EAGLEDrawableHole.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableHole.m; sourceTree = "<group>"; };
+		47AE2DD4186C5C13003054E8 /* FileIcons.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = FileIcons.xcassets; sourceTree = "<group>"; };
+		47AEE46E184792ED007D5F7D /* EAGLEDrawableRectangle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableRectangle.h; sourceTree = "<group>"; };
+		47AEE46F184792ED007D5F7D /* EAGLEDrawableRectangle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableRectangle.m; sourceTree = "<group>"; };
+		47C3F8C0188C91CE00705CF9 /* EAGLEDrawableFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableFrame.h; sourceTree = "<group>"; };
+		47C3F8C1188C91CE00705CF9 /* EAGLEDrawableFrame.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableFrame.m; sourceTree = "<group>"; };
+		47C5ABB118571A0700A1D530 /* ico_schematic-64.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_schematic-64.png"; sourceTree = "<group>"; };
+		47C5ABB218571A0700A1D530 /* ico_schematic-320.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_schematic-320.png"; sourceTree = "<group>"; };
+		47C5ABB71857243800A1D530 /* crypt.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = crypt.h; sourceTree = "<group>"; };
+		47C5ABB81857243800A1D530 /* ioapi.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = ioapi.c; sourceTree = "<group>"; };
+		47C5ABB91857243800A1D530 /* ioapi.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ioapi.h; sourceTree = "<group>"; };
+		47C5ABBA1857243800A1D530 /* mztools.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = mztools.c; sourceTree = "<group>"; };
+		47C5ABBB1857243800A1D530 /* mztools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mztools.h; sourceTree = "<group>"; };
+		47C5ABBC1857243800A1D530 /* unzip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = unzip.c; sourceTree = "<group>"; };
+		47C5ABBD1857243800A1D530 /* unzip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = unzip.h; sourceTree = "<group>"; };
+		47C5ABBE1857243800A1D530 /* zip.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = zip.c; sourceTree = "<group>"; };
+		47C5ABBF1857243800A1D530 /* zip.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = zip.h; sourceTree = "<group>"; };
+		47C5ABC01857243800A1D530 /* SSZipArchive.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SSZipArchive.h; sourceTree = "<group>"; };
+		47C5ABC11857243800A1D530 /* SSZipArchive.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SSZipArchive.m; sourceTree = "<group>"; };
+		47C5ABC71857244700A1D530 /* libz.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libz.dylib; path = usr/lib/libz.dylib; sourceTree = SDKROOT; };
+		47C5ABCA18574EBE00A1D530 /* UIView+AnchorPoint.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIView+AnchorPoint.h"; sourceTree = "<group>"; };
+		47C5ABCB18574EBE00A1D530 /* UIView+AnchorPoint.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIView+AnchorPoint.m"; sourceTree = "<group>"; };
+		47C73B60184939500041C4C4 /* DropboxSDK.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = DropboxSDK.framework; sourceTree = "<group>"; };
+		47C73B621849395C0041C4C4 /* Security.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Security.framework; path = System/Library/Frameworks/Security.framework; sourceTree = SDKROOT; };
+		47C73B64184939620041C4C4 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
+		47C73B6618493B3B0041C4C4 /* DocumentChooserViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DocumentChooserViewController.h; sourceTree = "<group>"; };
+		47C73B6718493B3B0041C4C4 /* DocumentChooserViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = DocumentChooserViewController.m; sourceTree = "<group>"; };
+		47C73B6918493DDB0041C4C4 /* Dropbox.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Dropbox.h; sourceTree = "<group>"; };
+		47C73B6A18493DDB0041C4C4 /* Dropbox.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = Dropbox.m; sourceTree = "<group>"; };
+		47D3C2F91898051700BB4E33 /* LayersViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = LayersViewController.h; sourceTree = "<group>"; };
+		47D3C2FA1898051700BB4E33 /* LayersViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = LayersViewController.m; sourceTree = "<group>"; };
+		47D3C2FC1898096200BB4E33 /* UIImage+Color.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "UIImage+Color.h"; sourceTree = "<group>"; };
+		47D3C2FD1898096200BB4E33 /* UIImage+Color.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "UIImage+Color.m"; sourceTree = "<group>"; };
+		47D3C2FF18983ED300BB4E33 /* EAGLEDrawablePad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawablePad.h; sourceTree = "<group>"; };
+		47D3C30018983ED300BB4E33 /* EAGLEDrawablePad.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawablePad.m; sourceTree = "<group>"; };
+		47D3C30218990D7600BB4E33 /* EAGLEDrawableSmd.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableSmd.h; sourceTree = "<group>"; };
+		47D3C30318990D7600BB4E33 /* EAGLEDrawableSmd.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableSmd.m; sourceTree = "<group>"; };
+		47D3C3051899460000BB4E33 /* EAGLEDrawableVia.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableVia.h; sourceTree = "<group>"; };
+		47D3C3061899460000BB4E33 /* EAGLEDrawableVia.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableVia.m; sourceTree = "<group>"; };
+		47D3C308189947DD00BB4E33 /* EAGLESignal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLESignal.h; sourceTree = "<group>"; };
+		47D3C309189947DD00BB4E33 /* EAGLESignal.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLESignal.m; sourceTree = "<group>"; };
+		47D3CD03184499B600F58240 /* EAGLEAttribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEAttribute.h; sourceTree = "<group>"; };
+		47D3CD04184499B600F58240 /* EAGLEAttribute.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEAttribute.m; sourceTree = "<group>"; };
+		47D3CD061844C17100F58240 /* EAGLEDrawableJunction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableJunction.h; sourceTree = "<group>"; };
+		47D3CD071844C17100F58240 /* EAGLEDrawableJunction.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableJunction.m; sourceTree = "<group>"; };
+		47D3CD091844C46D00F58240 /* EAGLEDrawableCircle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableCircle.h; sourceTree = "<group>"; };
+		47D3CD0A1844C46D00F58240 /* EAGLEDrawableCircle.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableCircle.m; sourceTree = "<group>"; };
+		47D3CD0C1845375B00F58240 /* EAGLEDrawableArc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEDrawableArc.h; sourceTree = "<group>"; };
+		47D3CD0D1845375B00F58240 /* EAGLEDrawableArc.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEDrawableArc.m; sourceTree = "<group>"; };
+		47DF18E31A782DE800513DAA /* GPNetworkIndicator.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GPNetworkIndicator.h; sourceTree = "<group>"; };
+		47DF18E41A782DE800513DAA /* GPNetworkIndicator.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = GPNetworkIndicator.m; sourceTree = "<group>"; };
+		47EB3A081A6B09FE00FCCBFA /* #2014-003_Powerpack.sch */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = "#2014-003_Powerpack.sch"; path = "../../../../Dropbox (Personal)/Electronics/Projects/#2014-003 Powerpack/#2014-003_Powerpack.sch"; sourceTree = "<group>"; };
+		47EB3A0A1A6B0BB100FCCBFA /* EAGLESheet.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLESheet.h; sourceTree = "<group>"; };
+		47EB3A0B1A6B0BB100FCCBFA /* EAGLESheet.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLESheet.m; sourceTree = "<group>"; };
+		47EB3A0D1A6B136100FCCBFA /* EAGLEModule.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = EAGLEModule.h; sourceTree = "<group>"; };
+		47EB3A0E1A6B136100FCCBFA /* EAGLEModule.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = EAGLEModule.m; sourceTree = "<group>"; };
+		47EF39A118B3512400F653DD /* Settings.bundle */ = {isa = PBXFileReference; lastKnownFileType = "wrapper.plug-in"; path = Settings.bundle; sourceTree = "<group>"; };
+		47EF39A318B39F3200F653DD /* ComponentSearchViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ComponentSearchViewController.h; sourceTree = "<group>"; };
+		47EF39A418B39F3200F653DD /* ComponentSearchViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ComponentSearchViewController.m; sourceTree = "<group>"; };
+		47EF39A618B3A3E100F653DD /* ComponentCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ComponentCell.xib; sourceTree = "<group>"; };
+		47F920F31892A1150025CF70 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		47FC175F18D9C25C008BBDB5 /* ico_board-320.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_board-320.png"; sourceTree = "<group>"; };
+		47FC176018D9C25C008BBDB5 /* ico_board-64.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "ico_board-64.png"; sourceTree = "<group>"; };
+		47FF32CC1847382F00E711C7 /* To-do.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = "To-do.txt"; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		473902831840D9930092D025 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				47C5ABC81857244700A1D530 /* libz.dylib in Frameworks */,
+				471C0B1B1A7D251F0076C79D /* Fabric.framework in Frameworks */,
+				471C0B1A1A7D251F0076C79D /* Crashlytics.framework in Frameworks */,
+				47C73B65184939620041C4C4 /* QuartzCore.framework in Frameworks */,
+				47C73B631849395C0041C4C4 /* Security.framework in Frameworks */,
+				47C73B61184939500041C4C4 /* DropboxSDK.framework in Frameworks */,
+				4739033F1840E28B0092D025 /* libxml2.dylib in Frameworks */,
+				4739028C1840D9930092D025 /* CoreGraphics.framework in Frameworks */,
+				4739028E1840D9930092D025 /* UIKit.framework in Frameworks */,
+				4739028A1840D9930092D025 /* Foundation.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		4739027D1840D9930092D025 = {
+			isa = PBXGroup;
+			children = (
+				471C0B1C1A7D2CCE0076C79D /* JWJ_config.xcconfig */,
+				4762BAF4189A667300B818F1 /* Limitations.md */,
+				47FF32CC1847382F00E711C7 /* To-do.txt */,
+				4739035518414C8E0092D025 /* Views */,
+				473903241840DD360092D025 /* External */,
+				473902C21840DC5C0092D025 /* View Controllers */,
+				473902BE1840D9990092D025 /* Models */,
+				47C5ABC918574EA500A1D530 /* Categories */,
+				4739028F1840D9930092D025 /* EAGLEView */,
+				473902C31840DC890092D025 /* Resources */,
+				473902881840D9930092D025 /* Frameworks */,
+				473902871840D9930092D025 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		473902871840D9930092D025 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				473902861840D9930092D025 /* EAGLEView.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		473902881840D9930092D025 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				47C5ABC71857244700A1D530 /* libz.dylib */,
+				47C73B64184939620041C4C4 /* QuartzCore.framework */,
+				47C73B621849395C0041C4C4 /* Security.framework */,
+				47C73B60184939500041C4C4 /* DropboxSDK.framework */,
+				4739033E1840E28B0092D025 /* libxml2.dylib */,
+				473902891840D9930092D025 /* Foundation.framework */,
+				4739028B1840D9930092D025 /* CoreGraphics.framework */,
+				4739028D1840D9930092D025 /* UIKit.framework */,
+				473902A81840D9930092D025 /* XCTest.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		4739028F1840D9930092D025 /* EAGLEView */ = {
+			isa = PBXGroup;
+			children = (
+				473902981840D9930092D025 /* AppDelegate.h */,
+				473902991840D9930092D025 /* AppDelegate.m */,
+				473902A11840D9930092D025 /* Images.xcassets */,
+				473902901840D9930092D025 /* Supporting Files */,
+				47C73B6918493DDB0041C4C4 /* Dropbox.h */,
+				47C73B6A18493DDB0041C4C4 /* Dropbox.m */,
+			);
+			path = EAGLEView;
+			sourceTree = "<group>";
+		};
+		473902901840D9930092D025 /* Supporting Files */ = {
+			isa = PBXGroup;
+			children = (
+				473902911840D9930092D025 /* EAGLEView-Info.plist */,
+				473902921840D9930092D025 /* InfoPlist.strings */,
+				473902951840D9930092D025 /* main.m */,
+				473902971840D9930092D025 /* EAGLEView-Prefix.pch */,
+			);
+			name = "Supporting Files";
+			sourceTree = "<group>";
+		};
+		473902BE1840D9990092D025 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				47D3CD03184499B600F58240 /* EAGLEAttribute.h */,
+				47D3CD04184499B600F58240 /* EAGLEAttribute.m */,
+				4782C77E1896A87900704F10 /* EAGLEBoard.h */,
+				4782C77F1896A87900704F10 /* EAGLEBoard.m */,
+				4782AB6B18438D100022F660 /* EAGLEDeviceset.h */,
+				4782AB6C18438D100022F660 /* EAGLEDeviceset.m */,
+				47D3CD0C1845375B00F58240 /* EAGLEDrawableArc.h */,
+				47D3CD0D1845375B00F58240 /* EAGLEDrawableArc.m */,
+				47D3CD091844C46D00F58240 /* EAGLEDrawableCircle.h */,
+				47D3CD0A1844C46D00F58240 /* EAGLEDrawableCircle.m */,
+				47C3F8C0188C91CE00705CF9 /* EAGLEDrawableFrame.h */,
+				47C3F8C1188C91CE00705CF9 /* EAGLEDrawableFrame.m */,
+				47A5D9AC18A190E300F2D920 /* EAGLEDrawableHole.h */,
+				47A5D9AD18A190E300F2D920 /* EAGLEDrawableHole.m */,
+				47D3CD061844C17100F58240 /* EAGLEDrawableJunction.h */,
+				47D3CD071844C17100F58240 /* EAGLEDrawableJunction.m */,
+				4736ABC71A6B1F970055F863 /* EAGLEDrawableModuleInstance.h */,
+				4736ABC81A6B1F970055F863 /* EAGLEDrawableModuleInstance.m */,
+				4736ABCA1A6B2E290055F863 /* EAGLEDrawableModulePort.h */,
+				4736ABCB1A6B2E290055F863 /* EAGLEDrawableModulePort.m */,
+				4739034C18411D5E0092D025 /* EAGLEDrawableObject.h */,
+				4739034D18411D5E0092D025 /* EAGLEDrawableObject.m */,
+				47D3C2FF18983ED300BB4E33 /* EAGLEDrawablePad.h */,
+				47D3C30018983ED300BB4E33 /* EAGLEDrawablePad.m */,
+				47390359184155530092D025 /* EAGLEDrawablePin.h */,
+				4739035A184155530092D025 /* EAGLEDrawablePin.m */,
+				4739035C184343610092D025 /* EAGLEDrawablePolygon.h */,
+				4739035D184343610092D025 /* EAGLEDrawablePolygon.m */,
+				47AEE46E184792ED007D5F7D /* EAGLEDrawableRectangle.h */,
+				47AEE46F184792ED007D5F7D /* EAGLEDrawableRectangle.m */,
+				47D3C30218990D7600BB4E33 /* EAGLEDrawableSmd.h */,
+				47D3C30318990D7600BB4E33 /* EAGLEDrawableSmd.m */,
+				4739035218411D8C0092D025 /* EAGLEDrawableText.h */,
+				4739035318411D8C0092D025 /* EAGLEDrawableText.m */,
+				47D3C3051899460000BB4E33 /* EAGLEDrawableVia.h */,
+				47D3C3061899460000BB4E33 /* EAGLEDrawableVia.m */,
+				4739034F18411D7E0092D025 /* EAGLEDrawableWire.h */,
+				4739035018411D7E0092D025 /* EAGLEDrawableWire.m */,
+				4782C783189701FB00704F10 /* EAGLEElement.h */,
+				4782C784189701FB00704F10 /* EAGLEElement.m */,
+				4782C77B1896A50F00704F10 /* EAGLEFile.h */,
+				4782C77C1896A50F00704F10 /* EAGLEFile.m */,
+				4782AB6818438C6D0022F660 /* EAGLEGate.h */,
+				4782AB6918438C6D0022F660 /* EAGLEGate.m */,
+				4782AB6518438B120022F660 /* EAGLEInstance.h */,
+				4782AB6618438B120022F660 /* EAGLEInstance.m */,
+				473903401840E4F10092D025 /* EAGLELayer.h */,
+				473903411840E4F10092D025 /* EAGLELayer.m */,
+				473903461840ED650092D025 /* EAGLELibrary.h */,
+				473903471840ED650092D025 /* EAGLELibrary.m */,
+				47EB3A0D1A6B136100FCCBFA /* EAGLEModule.h */,
+				47EB3A0E1A6B136100FCCBFA /* EAGLEModule.m */,
+				4784FF041843FE000005C290 /* EAGLENet.h */,
+				4784FF051843FE000005C290 /* EAGLENet.m */,
+				473902BF1840DA180092D025 /* EAGLEObject.h */,
+				473902C01840DA180092D025 /* EAGLEObject.m */,
+				4782C7861897039D00704F10 /* EAGLEPackage.h */,
+				4782C7871897039D00704F10 /* EAGLEPackage.m */,
+				4782AB6E18439E190022F660 /* EAGLEPart.h */,
+				4782AB6F18439E190022F660 /* EAGLEPart.m */,
+				473903431840E9430092D025 /* EAGLESchematic.h */,
+				473903441840E9430092D025 /* EAGLESchematic.m */,
+				47EB3A0A1A6B0BB100FCCBFA /* EAGLESheet.h */,
+				47EB3A0B1A6B0BB100FCCBFA /* EAGLESheet.m */,
+				47D3C308189947DD00BB4E33 /* EAGLESignal.h */,
+				47D3C309189947DD00BB4E33 /* EAGLESignal.m */,
+				4739034918411D1A0092D025 /* EAGLESymbol.h */,
+				4739034A18411D1A0092D025 /* EAGLESymbol.m */,
+			);
+			name = Models;
+			path = EAGLEView/Models;
+			sourceTree = "<group>";
+		};
+		473902C21840DC5C0092D025 /* View Controllers */ = {
+			isa = PBXGroup;
+			children = (
+				47EF39A318B39F3200F653DD /* ComponentSearchViewController.h */,
+				47EF39A418B39F3200F653DD /* ComponentSearchViewController.m */,
+				478368691893E83D0031977E /* DetailPopupViewController.h */,
+				4783686A1893E83D0031977E /* DetailPopupViewController.m */,
+				47C73B6618493B3B0041C4C4 /* DocumentChooserViewController.h */,
+				47C73B6718493B3B0041C4C4 /* DocumentChooserViewController.m */,
+				47D3C2F91898051700BB4E33 /* LayersViewController.h */,
+				47D3C2FA1898051700BB4E33 /* LayersViewController.m */,
+				4739029E1840D9930092D025 /* ViewController.h */,
+				4739029F1840D9930092D025 /* ViewController.m */,
+				47452F281A6DB1BE00C0049A /* ModulesViewController.h */,
+				47452F291A6DB1BE00C0049A /* ModulesViewController.m */,
+			);
+			name = "View Controllers";
+			path = EAGLEView;
+			sourceTree = "<group>";
+		};
+		473902C31840DC890092D025 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				4751137C1A713A9900275407 /* empty_7.2.0.brd */,
+				4751137A1A71388200275407 /* empty_7.2.0.sch */,
+				47EB3A081A6B09FE00FCCBFA /* #2014-003_Powerpack.sch */,
+				473903251840DED90092D025 /* LED_resistor.brd */,
+				473903261840DED90092D025 /* LED_resistor.sch */,
+				473902C41840DC9E0092D025 /* XIB */,
+				4739035F184355570092D025 /* Images */,
+				47EF39A118B3512400F653DD /* Settings.bundle */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		473902C41840DC9E0092D025 /* XIB */ = {
+			isa = PBXGroup;
+			children = (
+				4739029B1840D9930092D025 /* Main.storyboard */,
+				4783686F18958CE70031977E /* Main-iPhone.storyboard */,
+				47EF39A618B3A3E100F653DD /* ComponentCell.xib */,
+			);
+			name = XIB;
+			sourceTree = "<group>";
+		};
+		473902C51840DD070092D025 /* ios-library */ = {
+			isa = PBXGroup;
+			children = (
+				47DF18E31A782DE800513DAA /* GPNetworkIndicator.h */,
+				47DF18E41A782DE800513DAA /* GPNetworkIndicator.m */,
+			);
+			path = "ios-library";
+			sourceTree = "<group>";
+		};
+		473903241840DD360092D025 /* External */ = {
+			isa = PBXGroup;
+			children = (
+				471C0B181A7D251F0076C79D /* Crashlytics.framework */,
+				471C0B191A7D251F0076C79D /* Fabric.framework */,
+				47112068184E009D00BAB3B2 /* MBProgressHUD.h */,
+				47112069184E009D00BAB3B2 /* MBProgressHUD.m */,
+				47C5ABB51857240A00A1D530 /* SSZipArchive */,
+				473903291840E2590092D025 /* KissXML */,
+				473902C51840DD070092D025 /* ios-library */,
+			);
+			name = External;
+			sourceTree = "<group>";
+		};
+		473903291840E2590092D025 /* KissXML */ = {
+			isa = PBXGroup;
+			children = (
+				4739032A1840E2590092D025 /* Additions */,
+				4739032D1840E2590092D025 /* Categories */,
+				473903301840E2590092D025 /* DDXML.h */,
+				473903311840E2590092D025 /* DDXMLDocument.h */,
+				473903321840E2590092D025 /* DDXMLDocument.m */,
+				473903331840E2590092D025 /* DDXMLElement.h */,
+				473903341840E2590092D025 /* DDXMLElement.m */,
+				473903351840E2590092D025 /* DDXMLNode.h */,
+				473903361840E2590092D025 /* DDXMLNode.m */,
+				473903371840E2590092D025 /* Private */,
+			);
+			path = KissXML;
+			sourceTree = "<group>";
+		};
+		4739032A1840E2590092D025 /* Additions */ = {
+			isa = PBXGroup;
+			children = (
+				4739032B1840E2590092D025 /* DDXMLElementAdditions.h */,
+				4739032C1840E2590092D025 /* DDXMLElementAdditions.m */,
+			);
+			path = Additions;
+			sourceTree = "<group>";
+		};
+		4739032D1840E2590092D025 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				4739032E1840E2590092D025 /* NSString+DDXML.h */,
+				4739032F1840E2590092D025 /* NSString+DDXML.m */,
+			);
+			path = Categories;
+			sourceTree = "<group>";
+		};
+		473903371840E2590092D025 /* Private */ = {
+			isa = PBXGroup;
+			children = (
+				473903381840E2590092D025 /* DDXMLPrivate.h */,
+			);
+			path = Private;
+			sourceTree = "<group>";
+		};
+		4739035518414C8E0092D025 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				4739035618414CB60092D025 /* EAGLEFileView.h */,
+				4739035718414CB60092D025 /* EAGLEFileView.m */,
+				4783686C1893F33A0031977E /* EAGLEInstanceView.h */,
+				4783686D1893F33A0031977E /* EAGLEInstanceView.m */,
+				478889A418A27220008F8CF2 /* FastTiledLayer.h */,
+				478889A518A27220008F8CF2 /* FastTiledLayer.m */,
+			);
+			name = Views;
+			path = EAGLEView/Views;
+			sourceTree = "<group>";
+		};
+		4739035F184355570092D025 /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				47FC175F18D9C25C008BBDB5 /* ico_board-320.png */,
+				47FC176018D9C25C008BBDB5 /* ico_board-64.png */,
+				47C5ABB118571A0700A1D530 /* ico_schematic-64.png */,
+				47C5ABB218571A0700A1D530 /* ico_schematic-320.png */,
+				473903601843557A0092D025 /* Application.xcassets */,
+				47AE2DD4186C5C13003054E8 /* FileIcons.xcassets */,
+				47F920F31892A1150025CF70 /* Images.xcassets */,
+				47452F2B1A6DC0F200C0049A /* Launch Screen.xib */,
+			);
+			name = Images;
+			sourceTree = "<group>";
+		};
+		47C5ABB51857240A00A1D530 /* SSZipArchive */ = {
+			isa = PBXGroup;
+			children = (
+				47C5ABB61857243800A1D530 /* minizip */,
+				47C5ABC01857243800A1D530 /* SSZipArchive.h */,
+				47C5ABC11857243800A1D530 /* SSZipArchive.m */,
+			);
+			name = SSZipArchive;
+			path = EAGLEView/SSZipArchive;
+			sourceTree = "<group>";
+		};
+		47C5ABB61857243800A1D530 /* minizip */ = {
+			isa = PBXGroup;
+			children = (
+				47C5ABB71857243800A1D530 /* crypt.h */,
+				47C5ABB81857243800A1D530 /* ioapi.c */,
+				47C5ABB91857243800A1D530 /* ioapi.h */,
+				47C5ABBA1857243800A1D530 /* mztools.c */,
+				47C5ABBB1857243800A1D530 /* mztools.h */,
+				47C5ABBC1857243800A1D530 /* unzip.c */,
+				47C5ABBD1857243800A1D530 /* unzip.h */,
+				47C5ABBE1857243800A1D530 /* zip.c */,
+				47C5ABBF1857243800A1D530 /* zip.h */,
+			);
+			path = minizip;
+			sourceTree = "<group>";
+		};
+		47C5ABC918574EA500A1D530 /* Categories */ = {
+			isa = PBXGroup;
+			children = (
+				47D3C2FC1898096200BB4E33 /* UIImage+Color.h */,
+				47D3C2FD1898096200BB4E33 /* UIImage+Color.m */,
+				47C5ABCA18574EBE00A1D530 /* UIView+AnchorPoint.h */,
+				47C5ABCB18574EBE00A1D530 /* UIView+AnchorPoint.m */,
+			);
+			name = Categories;
+			path = EAGLEView;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		473902851840D9930092D025 /* EAGLEView */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 473902B81840D9930092D025 /* Build configuration list for PBXNativeTarget "EAGLEView" */;
+			buildPhases = (
+				47EE1AF61A756356001A9F70 /* ShellScript */,
+				473902821840D9930092D025 /* Sources */,
+				473902831840D9930092D025 /* Frameworks */,
+				473902841840D9930092D025 /* Resources */,
+				471C0B171A7D23580076C79D /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = EAGLEView;
+			productName = EAGLEView;
+			productReference = 473902861840D9930092D025 /* EAGLEView.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		4739027E1840D9930092D025 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0610;
+				ORGANIZATIONNAME = "Greener Pastures";
+			};
+			buildConfigurationList = 473902811840D9930092D025 /* Build configuration list for PBXProject "EAGLEView" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 4739027D1840D9930092D025;
+			productRefGroup = 473902871840D9930092D025 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				473902851840D9930092D025 /* EAGLEView */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		473902841840D9930092D025 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4783687018958CE70031977E /* Main-iPhone.storyboard in Resources */,
+				47452F2C1A6DC0F200C0049A /* Launch Screen.xib in Resources */,
+				47FC176218D9C25C008BBDB5 /* ico_board-64.png in Resources */,
+				473902A21840D9930092D025 /* Images.xcassets in Resources */,
+				47F920F41892A1150025CF70 /* Images.xcassets in Resources */,
+				473902941840D9930092D025 /* InfoPlist.strings in Resources */,
+				473903271840DED90092D025 /* LED_resistor.brd in Resources */,
+				4751137D1A713A9900275407 /* empty_7.2.0.brd in Resources */,
+				47EF39A718B3A3E100F653DD /* ComponentCell.xib in Resources */,
+				47C5ABB418571A0700A1D530 /* ico_schematic-320.png in Resources */,
+				4751137B1A71388200275407 /* empty_7.2.0.sch in Resources */,
+				47AE2DD5186C5C13003054E8 /* FileIcons.xcassets in Resources */,
+				473903611843557A0092D025 /* Application.xcassets in Resources */,
+				47EF39A218B3512400F653DD /* Settings.bundle in Resources */,
+				473903281840DED90092D025 /* LED_resistor.sch in Resources */,
+				4739029D1840D9930092D025 /* Main.storyboard in Resources */,
+				47EB3A091A6B09FE00FCCBFA /* #2014-003_Powerpack.sch in Resources */,
+				47C5ABB318571A0700A1D530 /* ico_schematic-64.png in Resources */,
+				47FC176118D9C25C008BBDB5 /* ico_board-320.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		471C0B171A7D23580076C79D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "./Fabric.framework/run ${FABRIC_API_KEY} ${FABRIC_BUILD_SECRET}; echo \"Using API key ${FABRIC_API_KEY}\"";
+		};
+		47EE1AF61A756356001A9F70 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 8;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+			shellPath = /bin/sh;
+			shellScript = "cd \"${PROJECT_DIR}\"\nbuildNumber=$(git rev-list HEAD | wc -l | tr -d ' ')\necho \"Number of commits: ${buildNumber}\"\n/usr/libexec/PlistBuddy -c \"Set :CFBundleVersion $buildNumber\" \"${PROJECT_DIR}/${INFOPLIST_FILE}\"";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		473902821840D9930092D025 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				473902A01840D9930092D025 /* ViewController.m in Sources */,
+				47C5ABC41857243800A1D530 /* unzip.c in Sources */,
+				47C3F8C2188C91CE00705CF9 /* EAGLEDrawableFrame.m in Sources */,
+				478889A618A27220008F8CF2 /* FastTiledLayer.m in Sources */,
+				4736ABCC1A6B2E290055F863 /* EAGLEDrawableModulePort.m in Sources */,
+				4739034E18411D5E0092D025 /* EAGLEDrawableObject.m in Sources */,
+				4739035418411D8C0092D025 /* EAGLEDrawableText.m in Sources */,
+				473902C11840DA180092D025 /* EAGLEObject.m in Sources */,
+				4739033B1840E2590092D025 /* DDXMLDocument.m in Sources */,
+				47D3C30118983ED300BB4E33 /* EAGLEDrawablePad.m in Sources */,
+				47EB3A0F1A6B136100FCCBFA /* EAGLEModule.m in Sources */,
+				4782C7881897039D00704F10 /* EAGLEPackage.m in Sources */,
+				47C5ABC51857243800A1D530 /* zip.c in Sources */,
+				47DF18E51A782DE800513DAA /* GPNetworkIndicator.m in Sources */,
+				4739029A1840D9930092D025 /* AppDelegate.m in Sources */,
+				47D3C30418990D7600BB4E33 /* EAGLEDrawableSmd.m in Sources */,
+				4782AB6D18438D100022F660 /* EAGLEDeviceset.m in Sources */,
+				47C5ABCC18574EBE00A1D530 /* UIView+AnchorPoint.m in Sources */,
+				47D3C30A189947DD00BB4E33 /* EAGLESignal.m in Sources */,
+				47C5ABC61857243800A1D530 /* SSZipArchive.m in Sources */,
+				47D3C2FB1898051700BB4E33 /* LayersViewController.m in Sources */,
+				4782AB7018439E190022F660 /* EAGLEPart.m in Sources */,
+				473902961840D9930092D025 /* main.m in Sources */,
+				4782C785189701FB00704F10 /* EAGLEElement.m in Sources */,
+				4783686E1893F33A0031977E /* EAGLEInstanceView.m in Sources */,
+				47EB3A0C1A6B0BB100FCCBFA /* EAGLESheet.m in Sources */,
+				47C5ABC31857243800A1D530 /* mztools.c in Sources */,
+				4739035118411D7E0092D025 /* EAGLEDrawableWire.m in Sources */,
+				4739034B18411D1A0092D025 /* EAGLESymbol.m in Sources */,
+				47D3C3071899460000BB4E33 /* EAGLEDrawableVia.m in Sources */,
+				47D3CD081844C17100F58240 /* EAGLEDrawableJunction.m in Sources */,
+				473903481840ED650092D025 /* EAGLELibrary.m in Sources */,
+				47D3C2FE1898096200BB4E33 /* UIImage+Color.m in Sources */,
+				47D3CD05184499B600F58240 /* EAGLEAttribute.m in Sources */,
+				4782AB6A18438C6D0022F660 /* EAGLEGate.m in Sources */,
+				473903391840E2590092D025 /* DDXMLElementAdditions.m in Sources */,
+				47C73B6B18493DDB0041C4C4 /* Dropbox.m in Sources */,
+				47C5ABC21857243800A1D530 /* ioapi.c in Sources */,
+				4711206A184E009D00BAB3B2 /* MBProgressHUD.m in Sources */,
+				47EF39A518B39F3200F653DD /* ComponentSearchViewController.m in Sources */,
+				47D3CD0B1844C46D00F58240 /* EAGLEDrawableCircle.m in Sources */,
+				4739035818414CB60092D025 /* EAGLEFileView.m in Sources */,
+				4739035B184155530092D025 /* EAGLEDrawablePin.m in Sources */,
+				4782C77D1896A50F00704F10 /* EAGLEFile.m in Sources */,
+				4739033C1840E2590092D025 /* DDXMLElement.m in Sources */,
+				4784FF061843FE000005C290 /* EAGLENet.m in Sources */,
+				4782AB6718438B120022F660 /* EAGLEInstance.m in Sources */,
+				47D3CD0E1845375B00F58240 /* EAGLEDrawableArc.m in Sources */,
+				4782C7801896A87900704F10 /* EAGLEBoard.m in Sources */,
+				4739033D1840E2590092D025 /* DDXMLNode.m in Sources */,
+				4739035E184343610092D025 /* EAGLEDrawablePolygon.m in Sources */,
+				47A5D9AE18A190E300F2D920 /* EAGLEDrawableHole.m in Sources */,
+				4736ABC91A6B1F970055F863 /* EAGLEDrawableModuleInstance.m in Sources */,
+				473903421840E4F10092D025 /* EAGLELayer.m in Sources */,
+				4783686B1893E83D0031977E /* DetailPopupViewController.m in Sources */,
+				47C73B6818493B3B0041C4C4 /* DocumentChooserViewController.m in Sources */,
+				47AEE470184792ED007D5F7D /* EAGLEDrawableRectangle.m in Sources */,
+				47452F2A1A6DB1BE00C0049A /* ModulesViewController.m in Sources */,
+				4739033A1840E2590092D025 /* NSString+DDXML.m in Sources */,
+				473903451840E9430092D025 /* EAGLESchematic.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		473902921840D9930092D025 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				473902931840D9930092D025 /* en */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+		4739029B1840D9930092D025 /* Main.storyboard */ = {
+			isa = PBXVariantGroup;
+			children = (
+				4739029C1840D9930092D025 /* Base */,
+			);
+			name = Main.storyboard;
+			path = ../EAGLEView;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
+
+/* Begin XCBuildConfiguration section */
+		473902B61840D9930092D025 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = "DEBUG=1";
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 2;
+			};
+			name = Debug;
+		};
+		473902B71840D9930092D025 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_PREPROCESSOR_DEFINITIONS = "";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 2;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		473902B91840D9930092D025 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = EagleAppIcon;
+				BUNDLE_ID = dk.greenerpastures.eagleview;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "EAGLEView/EAGLEView-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/include/libxml2,
+				);
+				INFOPLIST_FILE = "EAGLEView/EAGLEView-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				OTHER_CFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		473902BA1840D9930092D025 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = EagleAppIcon;
+				BUNDLE_ID = "";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "EAGLEView/EAGLEView-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/include/libxml2,
+				);
+				INFOPLIST_FILE = "EAGLEView/EAGLEView-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				OTHER_CFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Release;
+		};
+		47452F261A6DAFA400C0049A /* Enterprise */ = {
+			isa = XCBuildConfiguration;
+			baseConfigurationReference = 471C0B1C1A7D2CCE0076C79D /* JWJ_config.xcconfig */;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution";
+				COPY_PHASE_STRIP = YES;
+				ENABLE_NS_ASSERTIONS = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_PREPROCESSOR_DEFINITIONS = "FABRIC_API_KEY=${FABRIC_API_KEY}";
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 7.0;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = 2;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Enterprise;
+		};
+		47452F271A6DAFA400C0049A /* Enterprise */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = EagleAppIcon;
+				BUNDLE_ID = "${ENTERPRISE_BUNDLE_ID}";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
+				GCC_PRECOMPILE_PREFIX_HEADER = YES;
+				GCC_PREFIX_HEADER = "EAGLEView/EAGLEView-Prefix.pch";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					/usr/include/libxml2,
+				);
+				INFOPLIST_FILE = "EAGLEView/EAGLEView-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 8.0;
+				OTHER_CFLAGS = "";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				TARGETED_DEVICE_FAMILY = "1,2";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Enterprise;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		473902811840D9930092D025 /* Build configuration list for PBXProject "EAGLEView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				473902B61840D9930092D025 /* Debug */,
+				473902B71840D9930092D025 /* Release */,
+				47452F261A6DAFA400C0049A /* Enterprise */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		473902B81840D9930092D025 /* Build configuration list for PBXNativeTarget "EAGLEView" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				473902B91840D9930092D025 /* Debug */,
+				473902BA1840D9930092D025 /* Release */,
+				47452F271A6DAFA400C0049A /* Enterprise */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 4739027E1840D9930092D025 /* Project object */;
+}

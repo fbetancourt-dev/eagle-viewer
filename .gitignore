@@ -1,0 +1,21 @@
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Generated viewer outputs and exports
+viewer_rendered.html
+*_viewer.html
+*.svg
+!references/**/*.svg
+!examples/**/*.svg
+
+# IDE / OS
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*.bak
