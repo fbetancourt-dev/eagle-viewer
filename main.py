@@ -15,6 +15,8 @@ import os
 import json
 import argparse
 import webbrowser
+import subprocess
+import shutil
 from typing import Optional, Tuple, Dict, Any
 
 # Ensure local modules can be imported
@@ -144,6 +146,14 @@ Examples:
         help="Export vector SVG files for schematic and/or PCB. Optional directory target."
     )
     parser.add_argument(
+        "--export-png",
+        nargs="?",
+        const=".",
+        default=None,
+        metavar="DIR",
+        help="Export high-res PNG preview images of schematic and/or PCB (uses headless Chrome)."
+    )
+    parser.add_argument(
         "--no-open",
         action="store_true",
         help="Generate viewer and exports without opening default web browser."
@@ -252,6 +262,47 @@ def main():
             brd_svg = os.path.join(target_dir, f"{circuit_name}_board.svg")
             exporter.export_board(brd_svg)
             print(f"-> Exported Board PCB SVG: {brd_svg}")
+
+    # Handle PNG export if requested
+    if args.export_png is not None:
+        target_png_dir = args.export_png
+        if target_png_dir == ".":
+            target_png_dir = os.getcwd()
+        os.makedirs(target_png_dir, exist_ok=True)
+
+        chrome_bin = shutil.which("google-chrome") or shutil.which("chromium") or shutil.which("chromium-browser")
+        if not chrome_bin:
+            print("Warning: Chrome/Chromium not found for PNG rendering.", file=sys.stderr)
+        else:
+            # First ensure SVGs exist as source for rasterization
+            tmp_svg_dir = target_png_dir
+            exporter = EagleToSvg(circuit_data)
+            
+            if sch_path and circuit_data.get("schematic", {}).get("instances"):
+                sch_svg = os.path.join(tmp_svg_dir, f"{circuit_name}_schematic.svg")
+                if not os.path.exists(sch_svg):
+                    exporter.export_schematic(sch_svg)
+                sch_png = os.path.join(target_png_dir, f"{circuit_name}_schematic.png")
+                subprocess.run([
+                    chrome_bin, "--headless", "--disable-gpu",
+                    f"--screenshot={sch_png}", "--window-size=1600,1000",
+                    f"file://{os.path.abspath(sch_svg)}"
+                ], capture_output=True)
+                if os.path.exists(sch_png):
+                    print(f"-> Exported Schematic PNG: {sch_png}")
+
+            if brd_path and (circuit_data.get("board", {}).get("elements") or circuit_data.get("board", {}).get("dimension")):
+                brd_svg = os.path.join(tmp_svg_dir, f"{circuit_name}_board.svg")
+                if not os.path.exists(brd_svg):
+                    exporter.export_board(brd_svg)
+                brd_png = os.path.join(target_png_dir, f"{circuit_name}_board.png")
+                subprocess.run([
+                    chrome_bin, "--headless", "--disable-gpu",
+                    f"--screenshot={brd_png}", "--window-size=1200,900",
+                    f"file://{os.path.abspath(brd_svg)}"
+                ], capture_output=True)
+                if os.path.exists(brd_png):
+                    print(f"-> Exported Board PCB PNG: {brd_png}")
 
     # Determine HTML output path
     base_dir = os.path.dirname(os.path.abspath(__file__))
