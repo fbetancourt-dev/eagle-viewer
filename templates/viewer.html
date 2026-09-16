@@ -28,10 +28,10 @@
             --pcb-bg: #000000; /* Fondo negro puro EAGLE */
             --pcb-top: #cc0000; /* Capa 1 Top - Rojo EAGLE */
             --pcb-bottom: #0000cc; /* Capa 16 Bottom - Azul EAGLE */
-            --pcb-pad: #00cc44; /* Capa 17 Pads - Verde brillante EAGLE */
-            --pcb-pad-stroke: #ffff00; /* Borde amarillo brillante Pads EAGLE */
-            --pcb-via: #ffff00; /* Capa 18 Vías - Anillo amarillo EAGLE */
-            --pcb-via-inner: #00cc44; /* Núcleo verde Vías EAGLE */
+            --pcb-pad: #00cc44; /* Capa 17 Pads - Verde puro EAGLE */
+            --pcb-pad-stroke: #009933; /* Borde verde sólido EAGLE */
+            --pcb-via: #ffff00; /* Capa 18 Vías - Amarillo puro EAGLE */
+            --pcb-via-stroke: #cccc00; /* Borde amarillo sólido EAGLE */
             --pcb-silk: #ffffff; /* Capas 21/25 - Blanco puro EAGLE */
             --pcb-dim: #ffffff; /* Capa 20 Dimensión - Blanco puro EAGLE */
         }
@@ -325,7 +325,7 @@
         .pcb-pad-thru {
             fill: var(--pcb-pad);
             stroke: var(--pcb-pad-stroke);
-            stroke-width: 0.12;
+            stroke-width: 0.05;
         }
         .pcb-pad-hole,
         .pcb-via-hole,
@@ -336,8 +336,8 @@
         }
         .pcb-via {
             fill: var(--pcb-via);
-            stroke: var(--pcb-via-inner);
-            stroke-width: 0.12;
+            stroke: var(--pcb-via-stroke);
+            stroke-width: 0.05;
         }
         .pcb-wire-halo {
             stroke: #000000;
@@ -1568,17 +1568,45 @@
             groupDrills.setAttribute("id", "pcbDrillsGroup");
             viewport.appendChild(groupDrills);
 
-            // Vías de señales (Capa 18)
+            // Vías de señales (Capa 18 - Amarillo puro EAGLE)
             EAGLE_DATA.board.signals.forEach(sig => {
                 sig.vias.forEach(v => {
                     var viaGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
                     viaGroup.setAttribute("class", "layer-18");
 
-                    var viaOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    viaOuter.setAttribute("cx", v.x);
-                    viaOuter.setAttribute("cy", -v.y);
-                    viaOuter.setAttribute("r", v.diameter / 2);
-                    viaOuter.setAttribute("class", "pcb-via");
+                    var diameter = v.diameter || (v.drill + 0.508);
+                    var viaOuter;
+
+                    if (v.shape === "square") {
+                        viaOuter = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                        viaOuter.setAttribute("x", v.x - diameter / 2);
+                        viaOuter.setAttribute("y", -v.y - diameter / 2);
+                        viaOuter.setAttribute("width", diameter);
+                        viaOuter.setAttribute("height", diameter);
+                        viaOuter.setAttribute("class", "pcb-via");
+                    } else if (v.shape === "octagon" || v.shape === "octagonal") {
+                        viaOuter = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                        var r = diameter / 2;
+                        var c = r * 0.41421356;
+                        var pts = [
+                            `${v.x - r},${-v.y - c}`,
+                            `${v.x - r},${-v.y + c}`,
+                            `${v.x - c},${-v.y + r}`,
+                            `${v.x + c},${-v.y + r}`,
+                            `${v.x + r},${-v.y + c}`,
+                            `${v.x + r},${-v.y - c}`,
+                            `${v.x + c},${-v.y - r}`,
+                            `${v.x - c},${-v.y - r}`
+                        ].join(" ");
+                        viaOuter.setAttribute("points", pts);
+                        viaOuter.setAttribute("class", "pcb-via");
+                    } else {
+                        viaOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        viaOuter.setAttribute("cx", v.x);
+                        viaOuter.setAttribute("cy", -v.y);
+                        viaOuter.setAttribute("r", diameter / 2);
+                        viaOuter.setAttribute("class", "pcb-via");
+                    }
                     viaGroup.appendChild(viaOuter);
 
                     var viaHole = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1971,7 +1999,7 @@
                 if (num === 1) return "var(--pcb-top)";
                 if (num === 16) return "var(--pcb-bottom)";
                 if (num === 17) return "var(--pcb-pad)";
-                if (num === 18) return "#b45309";
+                if (num === 18) return "var(--pcb-via)";
                 if (num === 20) return "#475569";
                 if (num === 21 || num === 25) return "var(--pcb-silk)";
                 if (num === 22 || num === 26) return "#cbd5e1";

@@ -458,12 +458,20 @@ class EagleParser:
                         "curve": float(curve) if curve is not None else None
                     })
                 for v in sig.findall("via"):
+                    drill_val = float(v.get("drill", 0.6096))
+                    v_diam = v.get("diameter")
+                    if v_diam is not None:
+                        diam_val = float(v_diam)
+                    else:
+                        # Default EAGLE restring for vias: max(drill * 0.25, 0.254mm) on each side
+                        restring = max(drill_val * 0.25, 0.254)
+                        diam_val = round(drill_val + 2.0 * restring, 4)
                     sig_data["vias"].append({
                         "x": float(v.get("x", 0)),
                         "y": float(v.get("y", 0)),
-                        "drill": float(v.get("drill", 0.5)),
-                        "diameter": float(v.get("diameter", 0.8)),
-                        "shape": v.get("shape", "round")
+                        "drill": drill_val,
+                        "diameter": diam_val,
+                        "shape": v.get("shape", "octagon")
                     })
                 for cr in sig.findall("contactref"):
                     sig_data["contactrefs"].append({
