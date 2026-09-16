@@ -429,7 +429,7 @@ class EagleToSvg:
         tree = ET.ElementTree(svg_root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
-    def export_board(self, output_path):
+    def export_board(self, output_path, side="both", mirror_bottom=True):
         dimension = self.data["board"]["dimension"]
         elements = self.data["board"]["elements"]
         signals = self.data["board"]["signals"]
@@ -496,9 +496,17 @@ class EagleToSvg:
             min_dim_y = min(min_dim_y, -d["y1"], -d["y2"])
             max_dim_y = max(max_dim_y, -d["y1"], -d["y2"])
 
+        # Group container for side/mirroring
+        if side == "bottom" and mirror_bottom:
+            container = ET.SubElement(svg_root, "g", {
+                "transform": f"translate({min_x + max_x}, 0) scale(-1, 1)"
+            })
+        else:
+            container = svg_root
+
         # 2. Dibujar el sustrato FR4 físico de la placa con esquinas redondeadas
         if min_dim_x < max_dim_x:
-            ET.SubElement(svg_root, "rect", {
+            ET.SubElement(container, "rect", {
                 "x": str(min_dim_x),
                 "y": str(min_dim_y),
                 "width": str(max_dim_x - min_dim_x),
@@ -514,12 +522,12 @@ class EagleToSvg:
         for d in dimension:
             if d.get("curve"):
                 path_str = self._calculate_arc_path(d["x1"], -d["y1"], d["x2"], -d["y2"], d["curve"])
-                ET.SubElement(svg_root, "path", {
+                ET.SubElement(container, "path", {
                     "d": path_str,
                     "class": "dim"
                 })
             else:
-                ET.SubElement(svg_root, "line", {
+                ET.SubElement(container, "line", {
                     "x1": str(d["x1"]),
                     "y1": str(-d["y1"]),
                     "x2": str(d["x2"]),
@@ -527,78 +535,82 @@ class EagleToSvg:
                     "class": "dim"
                 })
 
-        # 4. Polígonos de cobre Bottom (azul oscuro translúcido)
-        for sig in signals:
-            if sig.get("polygons"):
-                for poly in sig["polygons"]:
-                    if poly["layer"] == 16:
-                        ET.SubElement(svg_root, "polygon", {
-                            "points": " ".join([f"{v['x']},{-v['y']}" for v in poly["vertices"]]),
-                            "class": "poly-bottom"
-                        })
+        # 4. Polígonos de cobre Bottom
+        if side in ("both", "bottom"):
+            for sig in signals:
+                if sig.get("polygons"):
+                    for poly in sig["polygons"]:
+                        if poly["layer"] == 16:
+                            ET.SubElement(container, "polygon", {
+                                "points": " ".join([f"{v['x']},{-v['y']}" for v in poly["vertices"]]),
+                                "class": "poly-bottom"
+                            })
 
-        # 5. Polígonos de cobre Top (rojo oscuro translúcido)
-        for sig in signals:
-            if sig.get("polygons"):
-                for poly in sig["polygons"]:
-                    if poly["layer"] == 1:
-                        ET.SubElement(svg_root, "polygon", {
-                            "points": " ".join([f"{v['x']},{-v['y']}" for v in poly["vertices"]]),
-                            "class": "poly-top"
-                        })
+        # 5. Polígonos de cobre Top
+        if side in ("both", "top"):
+            for sig in signals:
+                if sig.get("polygons"):
+                    for poly in sig["polygons"]:
+                        if poly["layer"] == 1:
+                            ET.SubElement(container, "polygon", {
+                                "points": " ".join([f"{v['x']},{-v['y']}" for v in poly["vertices"]]),
+                                "class": "poly-top"
+                            })
 
-        # 6. Pistas Bottom (azul)
-        for sig in signals:
-            for w in sig["wires"]:
-                if w["layer"] == 16:
-                    if w.get("curve"):
-                        path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
-                        ET.SubElement(svg_root, "path", {
-                            "d": path_str,
-                            "class": "track-bottom",
-                            "style": f"stroke-width: {w['width']};"
-                        })
-                    else:
-                        ET.SubElement(svg_root, "line", {
-                            "x1": str(w["x1"]),
-                            "y1": str(-w["y1"]),
-                            "x2": str(w["x2"]),
-                            "y2": str(-w["y2"]),
-                            "class": "track-bottom",
-                            "style": f"stroke-width: {w['width']};"
-                        })
+        # 6. Pistas Bottom
+        if side in ("both", "bottom"):
+            for sig in signals:
+                for w in sig["wires"]:
+                    if w["layer"] == 16:
+                        if w.get("curve"):
+                            path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
+                            ET.SubElement(container, "path", {
+                                "d": path_str,
+                                "class": "track-bottom",
+                                "style": f"stroke-width: {w['width']};"
+                            })
+                        else:
+                            ET.SubElement(container, "line", {
+                                "x1": str(w["x1"]),
+                                "y1": str(-w["y1"]),
+                                "x2": str(w["x2"]),
+                                "y2": str(-w["y2"]),
+                                "class": "track-bottom",
+                                "style": f"stroke-width: {w['width']};"
+                            })
 
-        # 7. Pistas Top (rojo)
-        for sig in signals:
-            for w in sig["wires"]:
-                if w["layer"] == 1:
-                    if w.get("curve"):
-                        path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
-                        ET.SubElement(svg_root, "path", {
-                            "d": path_str,
-                            "class": "track-top",
-                            "style": f"stroke-width: {w['width']};"
-                        })
-                    else:
-                        ET.SubElement(svg_root, "line", {
-                            "x1": str(w["x1"]),
-                            "y1": str(-w["y1"]),
-                            "x2": str(w["x2"]),
-                            "y2": str(-w["y2"]),
-                            "class": "track-top",
-                            "style": f"stroke-width: {w['width']};"
-                        })
+        # 7. Pistas Top
+        if side in ("both", "top"):
+            for sig in signals:
+                for w in sig["wires"]:
+                    if w["layer"] == 1:
+                        if w.get("curve"):
+                            path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
+                            ET.SubElement(container, "path", {
+                                "d": path_str,
+                                "class": "track-top",
+                                "style": f"stroke-width: {w['width']};"
+                            })
+                        else:
+                            ET.SubElement(container, "line", {
+                                "x1": str(w["x1"]),
+                                "y1": str(-w["y1"]),
+                                "x2": str(w["x2"]),
+                                "y2": str(-w["y2"]),
+                                "class": "track-top",
+                                "style": f"stroke-width: {w['width']};"
+                            })
 
         # 8. Vías (oro/latón con perforación negra)
         for sig in signals:
             for v in sig["vias"]:
-                ET.SubElement(svg_root, "circle", {
+                ET.SubElement(container, "circle", {
                     "cx": str(v["x"]),
                     "cy": str(-v["y"]),
                     "r": str(v["diameter"] / 2),
                     "class": "via"
                 })
-                ET.SubElement(svg_root, "circle", {
+                ET.SubElement(container, "circle", {
                     "cx": str(v["x"]),
                     "cy": str(-v["y"]),
                     "r": str(v["drill"] / 2),
@@ -636,12 +648,12 @@ class EagleToSvg:
                     if item["layer"] == 1: poly_cls = "poly-top"
                     elif item["layer"] == 16: poly_cls = "poly-bottom"
                     
-                    ET.SubElement(svg_root, "polygon", {
+                    ET.SubElement(container, "polygon", {
                         "points": " ".join([f"{v['x']},{-v['y']}" for v in item["vertices"]]),
                         "class": f"{poly_cls} layer-{item['layer']}"
                     })
                 elif item["type"] == "circle":
-                    ET.SubElement(svg_root, "circle", {
+                    ET.SubElement(container, "circle", {
                         "cx": str(item["x"]),
                         "cy": str(-item["y"]),
                         "r": str(item["radius"]),
@@ -649,7 +661,7 @@ class EagleToSvg:
                         "style": f"stroke-width: {item['width']};" if item.get("width") else ""
                     })
                 elif item["type"] == "rectangle":
-                    ET.SubElement(svg_root, "rect", {
+                    ET.SubElement(container, "rect", {
                         "x": str(min(item["x1"], item["x2"])),
                         "y": str(-max(item["y1"], item["y2"])),
                         "width": str(abs(item["x2"] - item["x1"])),
@@ -663,7 +675,7 @@ class EagleToSvg:
                         if match:
                             t_angle = int(match.group(1))
                     
-                    text_el = ET.SubElement(svg_root, "text", {
+                    text_el = ET.SubElement(container, "text", {
                         "x": str(item["x"]),
                         "y": str(-item["y"]),
                         "class": f"silk-text layer-{item['layer']}"
@@ -677,7 +689,7 @@ class EagleToSvg:
             pkg_key = f"{elem['library']}_{elem['package']}"
             pkg = packages.get(pkg_key)
 
-            g = ET.SubElement(svg_root, "g")
+            g = ET.SubElement(container, "g")
             
             angle = 0
             mirrored = 'M' in elem["rot"] if elem["rot"] else False
@@ -825,7 +837,7 @@ class EagleToSvg:
         # 10. Agujeros directos en la placa (Holes)
         if "holes" in self.data["board"]:
             for h in self.data["board"]["holes"]:
-                ET.SubElement(svg_root, "circle", {
+                ET.SubElement(container, "circle", {
                     "cx": str(h["x"]),
                     "cy": str(-h["y"]),
                     "r": str(h["drill"] / 2),
@@ -834,6 +846,14 @@ class EagleToSvg:
 
         tree = ET.ElementTree(svg_root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
+
+    def export_board_top(self, output_path):
+        """Exports clean isolated top side of the PCB."""
+        return self.export_board(output_path, side="top", mirror_bottom=False)
+
+    def export_board_bottom(self, output_path, mirror=True):
+        """Exports clean isolated bottom side of the PCB, mirrored horizontally to match physical underside."""
+        return self.export_board(output_path, side="bottom", mirror_bottom=mirror)
 
     def _calculate_arc_path(self, x1, y1, x2, y2, curve):
         arc_angle = curve * math.pi / 180.0

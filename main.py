@@ -259,9 +259,17 @@ def main():
             print(f"-> Exported Schematic SVG: {sch_svg}")
 
         if brd_path and (circuit_data.get("board", {}).get("elements") or circuit_data.get("board", {}).get("dimension")):
+            brd_top_svg = os.path.join(target_dir, f"{circuit_name}_board_top.svg")
+            exporter.export_board_top(brd_top_svg)
+            print(f"-> Exported Board Top SVG: {brd_top_svg}")
+
+            brd_bot_svg = os.path.join(target_dir, f"{circuit_name}_board_bottom.svg")
+            exporter.export_board_bottom(brd_bot_svg, mirror=True)
+            print(f"-> Exported Board Bottom SVG: {brd_bot_svg}")
+
             brd_svg = os.path.join(target_dir, f"{circuit_name}_board.svg")
-            exporter.export_board(brd_svg)
-            print(f"-> Exported Board PCB SVG: {brd_svg}")
+            exporter.export_board(brd_svg, side="both")
+            print(f"-> Exported Board PCB (Combined) SVG: {brd_svg}")
 
     # Handle PNG export if requested
     if args.export_png is not None:
@@ -292,9 +300,36 @@ def main():
                     print(f"-> Exported Schematic PNG: {sch_png}")
 
             if brd_path and (circuit_data.get("board", {}).get("elements") or circuit_data.get("board", {}).get("dimension")):
+                # Top PNG
+                brd_top_svg = os.path.join(tmp_svg_dir, f"{circuit_name}_board_top.svg")
+                if not os.path.exists(brd_top_svg):
+                    exporter.export_board_top(brd_top_svg)
+                brd_top_png = os.path.join(target_png_dir, f"{circuit_name}_board_top.png")
+                subprocess.run([
+                    chrome_bin, "--headless", "--disable-gpu",
+                    f"--screenshot={brd_top_png}", "--window-size=1200,900",
+                    f"file://{os.path.abspath(brd_top_svg)}"
+                ], capture_output=True)
+                if os.path.exists(brd_top_png):
+                    print(f"-> Exported Board Top PNG: {brd_top_png}")
+
+                # Bottom PNG
+                brd_bot_svg = os.path.join(tmp_svg_dir, f"{circuit_name}_board_bottom.svg")
+                if not os.path.exists(brd_bot_svg):
+                    exporter.export_board_bottom(brd_bot_svg, mirror=True)
+                brd_bot_png = os.path.join(target_png_dir, f"{circuit_name}_board_bottom.png")
+                subprocess.run([
+                    chrome_bin, "--headless", "--disable-gpu",
+                    f"--screenshot={brd_bot_png}", "--window-size=1200,900",
+                    f"file://{os.path.abspath(brd_bot_svg)}"
+                ], capture_output=True)
+                if os.path.exists(brd_bot_png):
+                    print(f"-> Exported Board Bottom PNG: {brd_bot_png}")
+
+                # Combined PCB PNG
                 brd_svg = os.path.join(tmp_svg_dir, f"{circuit_name}_board.svg")
                 if not os.path.exists(brd_svg):
-                    exporter.export_board(brd_svg)
+                    exporter.export_board(brd_svg, side="both")
                 brd_png = os.path.join(target_png_dir, f"{circuit_name}_board.png")
                 subprocess.run([
                     chrome_bin, "--headless", "--disable-gpu",
@@ -302,7 +337,7 @@ def main():
                     f"file://{os.path.abspath(brd_svg)}"
                 ], capture_output=True)
                 if os.path.exists(brd_png):
-                    print(f"-> Exported Board PCB PNG: {brd_png}")
+                    print(f"-> Exported Board PCB (Combined) PNG: {brd_png}")
 
     # Determine HTML output path
     base_dir = os.path.dirname(os.path.abspath(__file__))

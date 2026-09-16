@@ -501,6 +501,12 @@
             <div class="panel-header">
                 <div>Placa de Circuito Impreso (PCB)</div>
                 <div class="panel-controls">
+                    <div style="display: inline-flex; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin-right: 4px;">
+                        <button class="btn active" id="btnPresetBoth" onclick="setPcbPreset('both')" title="Ambas caras (Vista combinada)">Ambas</button>
+                        <button class="btn" id="btnPresetTop" onclick="setPcbPreset('top')" title="Cara Superior (Top)">Top</button>
+                        <button class="btn" id="btnPresetBottom" onclick="setPcbPreset('bottom')" title="Cara Inferior (Bottom espejado)">Bottom</button>
+                    </div>
+                    <button class="btn" id="btnPcbFlip" onclick="togglePcbFlip()" title="Voltear placa horizontalmente (espejo físico)">Voltear 🔄</button>
                     <button class="btn" id="btnRatsnest" onclick="toggleRatsnest()">Ratsnest: OFF</button>
                     <button class="btn" onclick="resetZoom('pcb')">Centrar</button>
                 </div>
@@ -529,7 +535,7 @@
 
         var viewStates = {
             sch: { x: 0, y: 0, scale: 2, dragging: false, startX: 0, startY: 0 },
-            pcb: { x: 0, y: 0, scale: 6, dragging: false, startX: 0, startY: 0 }
+            pcb: { x: 0, y: 0, scale: 6, dragging: false, startX: 0, startY: 0, flipped: false }
         };
 
         var currentSheetIndex = 0;
@@ -1678,13 +1684,74 @@
             infoPanel.style.display = "block";
         }
 
+
+        function updatePcbTransform() {
+            var state = viewStates.pcb;
+            var viewport = document.getElementById('pcbViewport');
+            if (!viewport) return;
+            var scaleX = state.flipped ? -state.scale : state.scale;
+            viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+            var btnFlip = document.getElementById("btnPcbFlip");
+            if (btnFlip) {
+                if (state.flipped) btnFlip.classList.add("active");
+                else btnFlip.classList.remove("active");
+            }
+        }
+
+        function togglePcbFlip() {
+            viewStates.pcb.flipped = !viewStates.pcb.flipped;
+            updatePcbTransform();
+        }
+
+        function setPcbPreset(preset) {
+            document.querySelectorAll("#btnPresetTop, #btnPresetBottom, #btnPresetBoth").forEach(function(b) {
+                b.classList.remove("active");
+            });
+
+            var topLayers = new Set([1, 17, 18, 20, 21, 23, 25, 27, 45, 51]);
+            var bottomLayers = new Set([16, 17, 18, 20, 22, 24, 26, 28, 45, 52]);
+
+            if (preset === 'top') {
+                var b = document.getElementById("btnPresetTop");
+                if (b) b.classList.add("active");
+                viewStates.pcb.flipped = false;
+                USED_LAYERS.forEach(function(num) {
+                    setLayerState(num, topLayers.has(num));
+                });
+            } else if (preset === 'bottom') {
+                var b = document.getElementById("btnPresetBottom");
+                if (b) b.classList.add("active");
+                viewStates.pcb.flipped = true;
+                USED_LAYERS.forEach(function(num) {
+                    setLayerState(num, bottomLayers.has(num));
+                });
+            } else if (preset === 'both') {
+                var b = document.getElementById("btnPresetBoth");
+                if (b) b.classList.add("active");
+                viewStates.pcb.flipped = false;
+                USED_LAYERS.forEach(function(num) {
+                    setLayerState(num, true);
+                });
+            }
+            updatePcbTransform();
+        }
+
+        function setLayerState(num, visible) {
+            var chk = document.getElementById("chkLayer" + num);
+            if (chk) chk.checked = visible;
+            document.querySelectorAll(".layer-" + num).forEach(function(el) {
+                el.style.display = visible ? "" : "none";
+            });
+        }
+
         function setupInteraction(svgId, viewportId, type) {
             var svg = document.getElementById(svgId);
             var viewport = document.getElementById(viewportId);
             var state = viewStates[type];
 
             function updateTransform() {
-                viewport.setAttribute("transform", `translate(${state.x}, ${state.y}) scale(${state.scale})`);
+                var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
+                viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
             }
 
             svg.addEventListener('mousedown', function(e) {
@@ -1769,7 +1836,8 @@
             state.scale = type === 'sch' ? 1.2 : 4.5;
             
             var viewport = document.getElementById(type + 'Viewport');
-            viewport.setAttribute("transform", `translate(${state.x}, ${state.y}) scale(${state.scale})`);
+            var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
+            viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
         }
 
         function getRotationAngle(rotStr) {
