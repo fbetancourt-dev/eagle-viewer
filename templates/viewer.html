@@ -485,13 +485,63 @@
             color: var(--accent-color);
             margin-bottom: 4px;
         }
+
+        /* Efecto Onditas / Radar Sonar Ping para localización visual cruzada */
+        .sonar-beacon {
+            pointer-events: none;
+        }
+        .sonar-center-dot {
+            fill: #00f0ff;
+            stroke: #ffffff;
+            stroke-width: 0.6px;
+            filter: drop-shadow(0 0 6px #00f0ff);
+        }
+        .sonar-ring {
+            fill: none;
+            stroke: #00f0ff;
+            stroke-width: 2px;
+            transform-origin: 0 0;
+            vector-effect: non-scaling-stroke;
+            animation: sonarExpand 1.8s cubic-bezier(0.1, 0.4, 0.2, 1) infinite;
+        }
+        .sonar-ring-1 {
+            animation-delay: 0s;
+        }
+        .sonar-ring-2 {
+            animation-delay: 0.6s;
+        }
+        .sonar-ring-3 {
+            animation-delay: 1.2s;
+        }
+        
+        @keyframes sonarExpand {
+            0% {
+                transform: scale(0.1);
+                stroke-width: 3.5px;
+                opacity: 1;
+                stroke: #00f0ff;
+            }
+            60% {
+                opacity: 0.75;
+                stroke: #38bdf8;
+            }
+            100% {
+                transform: scale(4.5);
+                stroke-width: 0.5px;
+                opacity: 0;
+                stroke: #0284c7;
+            }
+        }
     </style>
 </head>
 <body>
 
     <header>
         <h1>Eagle <span>Hardware Visualizer</span></h1>
-        <div class="subtitle" id="boardName">Cargando circuito...</div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <button id="btnAutoCenter" class="btn" onclick="toggleAutoCenter()" title="Auto-centrar componente en el lado opuesto al seleccionarlo">🎯 Auto-centrar: OFF</button>
+            <div class="subtitle" id="boardName">Cargando circuito...</div>
+        </div>
     </header>
 
     <main>
@@ -551,12 +601,15 @@
             </div>
             
             <!-- Diálogo Flotante de Capas (Display) -->
-            <div class="layer-dialog">
-                <div class="layer-dialog-title">
+            <div class="layer-dialog" id="layerDialog">
+                <div class="layer-dialog-title" onclick="toggleLayerDialog()" style="cursor: pointer; user-select: none;" title="Haz clic para colapsar/expandir">
                     <span>Display Layers</span>
-                    <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Eagle CAD</span>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                        <span style="font-size: 0.75rem; font-weight: normal; color: var(--text-muted);">Eagle CAD</span>
+                        <span id="layerDialogToggleIcon" style="font-size: 0.75rem; color: var(--accent-color);">▼</span>
+                    </div>
                 </div>
-                <div class="layer-list">
+                <div class="layer-list" id="layerListContainer">
                     <!-- Se genera dinámicamente con JavaScript -->
                 </div>
             </div>
@@ -1244,10 +1297,10 @@
                 }
                 
                 gComp.onclick = function() {
-                    highlightPart(inst.part, inst.value);
+                    highlightPart(inst.part, inst.value, 'sch');
                 };
                 gText.onclick = function() {
-                    highlightPart(inst.part, inst.value);
+                    highlightPart(inst.part, inst.value, 'sch');
                 };
             });
             }
@@ -1636,7 +1689,7 @@
                 }
 
                 g.onclick = function() {
-                    highlightPart(elem.name, elem.value);
+                    highlightPart(elem.name, elem.value, 'pcb');
                 };
 
                 viewport.appendChild(g);
@@ -1734,7 +1787,187 @@
             });
         }
 
-        function highlightPart(partName, value) {
+        var autoCenterEnabled = false;
+        var rippleTimers = {};
+
+        function toggleAutoCenter() {
+            autoCenterEnabled = !autoCenterEnabled;
+            var btn = document.getElementById("btnAutoCenter");
+            if (btn) {
+                btn.innerText = "🎯 Auto-centrar: " + (autoCenterEnabled ? "ON" : "OFF");
+                if (autoCenterEnabled) btn.classList.add("active");
+                else btn.classList.remove("active");
+            }
+        }
+
+        function toggleLayerDialog() {
+            var list = document.getElementById("layerListContainer");
+            var icon = document.getElementById("layerDialogToggleIcon");
+            if (!list) return;
+            if (list.style.display === "none") {
+                list.style.display = "flex";
+                if (icon) icon.textContent = "▼";
+            } else {
+                list.style.display = "none";
+                if (icon) icon.textContent = "▲";
+            }
+        }
+
+        function triggerRipple(type, x, y) {
+            var viewport = document.getElementById(type + 'Viewport');
+            if (!viewport) return;
+            
+            var containerId = type + 'RippleGroup';
+            var container = document.getElementById(containerId);
+            if (!container) {
+                container = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                container.setAttribute("id", containerId);
+                container.setAttribute("style", "pointer-events: none;");
+                viewport.appendChild(container);
+            }
+            container.innerHTML = "";
+            
+            var scale = (viewStates[type] && viewStates[type].scale) ? viewStates[type].scale : 5.0;
+            var maxRadius = Math.max(14, 115 / scale);
+            var minRadius = Math.max(1.0, 4 / scale);
+            var dotRadius = Math.max(0.8, 3.8 / scale);
+            var tickLen = Math.max(1.6, 9 / scale);
+            var tickOffset = Math.max(1.2, 6 / scale);
+
+            var isPcb = (type === 'pcb');
+            var primaryColor = isPcb ? '#00f0ff' : '#0284c7';
+            var secondaryColor = isPcb ? '#38bdf8' : '#2563eb';
+            var dotFill = isPcb ? '#00f0ff' : '#0284c7';
+            var dotStroke = '#ffffff';
+
+            var beacon = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            beacon.setAttribute("transform", `translate(${x}, ${y})`);
+            beacon.setAttribute("class", "sonar-beacon");
+            
+            // Retícula / Crosshair sutil tipo mira radar
+            var ticks = [
+                { x1: 0, y1: -tickOffset - tickLen, x2: 0, y2: -tickOffset },
+                { x1: 0, y1: tickOffset, x2: 0, y2: tickOffset + tickLen },
+                { x1: -tickOffset - tickLen, y1: 0, x2: -tickOffset, y2: 0 },
+                { x1: tickOffset, y1: 0, x2: tickOffset + tickLen, y2: 0 }
+            ];
+            ticks.forEach(function(t) {
+                var l = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                l.setAttribute("x1", t.x1);
+                l.setAttribute("y1", t.y1);
+                l.setAttribute("x2", t.x2);
+                l.setAttribute("y2", t.y2);
+                l.setAttribute("stroke", primaryColor);
+                l.setAttribute("stroke-width", "2");
+                l.setAttribute("vector-effect", "non-scaling-stroke");
+                beacon.appendChild(l);
+            });
+
+            // Punto central brillante pulsante
+            var dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+            dot.setAttribute("cx", 0);
+            dot.setAttribute("cy", 0);
+            dot.setAttribute("r", dotRadius);
+            dot.setAttribute("fill", dotFill);
+            dot.setAttribute("stroke", dotStroke);
+            dot.setAttribute("stroke-width", "1.5");
+            dot.setAttribute("vector-effect", "non-scaling-stroke");
+            
+            var animDot = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+            animDot.setAttribute("attributeName", "r");
+            animDot.setAttribute("values", `${dotRadius * 0.8}; ${dotRadius * 1.5}; ${dotRadius * 0.8}`);
+            animDot.setAttribute("dur", "1.1s");
+            animDot.setAttribute("repeatCount", "indefinite");
+            dot.appendChild(animDot);
+            beacon.appendChild(dot);
+            
+            // 4 ondas concéntricas de radar que se expanden continuamente
+            var numRings = 4;
+            var duration = 2.0;
+            var ringColors = isPcb 
+                ? [primaryColor, secondaryColor, primaryColor, secondaryColor] 
+                : [primaryColor, secondaryColor, '#0369a1', secondaryColor];
+
+            for (var i = 0; i < numRings; i++) {
+                var ring = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                ring.setAttribute("cx", 0);
+                ring.setAttribute("cy", 0);
+                ring.setAttribute("r", minRadius);
+                ring.setAttribute("fill", "none");
+                ring.setAttribute("stroke", ringColors[i % ringColors.length]);
+                ring.setAttribute("stroke-width", "3");
+                ring.setAttribute("vector-effect", "non-scaling-stroke");
+                ring.setAttribute("opacity", "0");
+                
+                var beginDelay = (i * (duration / numRings)).toFixed(2) + "s";
+                
+                var animR = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+                animR.setAttribute("attributeName", "r");
+                animR.setAttribute("from", minRadius);
+                animR.setAttribute("to", maxRadius);
+                animR.setAttribute("dur", duration + "s");
+                animR.setAttribute("begin", beginDelay);
+                animR.setAttribute("repeatCount", "indefinite");
+                ring.appendChild(animR);
+                
+                var animO = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+                animO.setAttribute("attributeName", "opacity");
+                animO.setAttribute("values", "1; 0.85; 0.4; 0");
+                animO.setAttribute("keyTimes", "0; 0.25; 0.65; 1");
+                animO.setAttribute("dur", duration + "s");
+                animO.setAttribute("begin", beginDelay);
+                animO.setAttribute("repeatCount", "indefinite");
+                ring.appendChild(animO);
+
+                var animW = document.createElementNS("http://www.w3.org/2000/svg", "animate");
+                animW.setAttribute("attributeName", "stroke-width");
+                animW.setAttribute("values", "3.5; 2.5; 1.5; 0.5");
+                animW.setAttribute("keyTimes", "0; 0.3; 0.7; 1");
+                animW.setAttribute("dur", duration + "s");
+                animW.setAttribute("begin", beginDelay);
+                animW.setAttribute("repeatCount", "indefinite");
+                ring.appendChild(animW);
+
+                beacon.appendChild(ring);
+            }
+            
+            container.appendChild(beacon);
+            
+            clearTimeout(rippleTimers[type]);
+            rippleTimers[type] = setTimeout(function() {
+                if (container) container.innerHTML = "";
+            }, 8000);
+        }
+
+        function centerOnPoint(type, targetX, targetY) {
+            var svg = document.getElementById(type + 'Svg');
+            if (!svg) return;
+            var rect = svg.getBoundingClientRect();
+            var centerX = rect.width / 2;
+            var centerY = rect.height / 2;
+            var state = viewStates[type];
+            var scaleX = (type === 'pcb' && state.flipped) ? -state.scale : state.scale;
+            
+            state.x = centerX - targetX * scaleX;
+            state.y = centerY - targetY * state.scale;
+            
+            if (type === 'pcb') {
+                updatePcbTransform();
+            } else {
+                var viewport = document.getElementById('schViewport');
+                if (viewport) {
+                    viewport.setAttribute("transform", `translate(${state.x}, ${state.y}) scale(${scaleX}, ${state.scale})`);
+                }
+            }
+        }
+
+        function highlightPart(partName, value, source) {
+            // Limpiar ondas previas en ambos paneles para evitar residuos visuales
+            var oldSchRipple = document.getElementById("schRippleGroup");
+            if (oldSchRipple) oldSchRipple.innerHTML = "";
+            var oldPcbRipple = document.getElementById("pcbRippleGroup");
+            if (oldPcbRipple) oldPcbRipple.innerHTML = "";
+
             // Si la parte pertenece a otra hoja en el esquemático, cambiar automáticamente a esa hoja
             if (EAGLE_DATA.schematic && EAGLE_DATA.schematic.instances) {
                 var foundInst = EAGLE_DATA.schematic.instances.find(i => i.part === partName);
@@ -1756,6 +1989,41 @@
                     rect.classList.add("highlighted-bg");
                 }
             });
+
+            // Localización visual cruzada con onditas animadas en el lado opuesto
+            if (source === 'sch' || !source) {
+                if (EAGLE_DATA.board && EAGLE_DATA.board.elements) {
+                    var pcbElem = EAGLE_DATA.board.elements.find(e => e.name === partName);
+                    if (pcbElem) {
+                        var px = pcbElem.x;
+                        var py = -pcbElem.y;
+                        triggerRipple('pcb', px, py);
+                        if (autoCenterEnabled) {
+                            centerOnPoint('pcb', px, py);
+                        }
+                    }
+                }
+            }
+            if (source === 'pcb' || !source) {
+                var schInst = null;
+                if (EAGLE_DATA.schematic) {
+                    var sheet = getActiveSheet();
+                    if (sheet && sheet.instances) {
+                        schInst = sheet.instances.find(i => i.part === partName);
+                    }
+                    if (!schInst && EAGLE_DATA.schematic.instances) {
+                        schInst = EAGLE_DATA.schematic.instances.find(i => i.part === partName);
+                    }
+                }
+                if (schInst) {
+                    var sx = schInst.x;
+                    var sy = -schInst.y;
+                    triggerRipple('sch', sx, sy);
+                    if (autoCenterEnabled) {
+                        centerOnPoint('sch', sx, sy);
+                    }
+                }
+            }
 
             var infoPanel = document.getElementById("schInfoPanel");
             var partTitle = document.getElementById("infoPartName");
@@ -2004,6 +2272,10 @@
         function clearSelection() {
             document.querySelectorAll(".highlighted").forEach(el => el.classList.remove("highlighted"));
             document.querySelectorAll(".highlighted-bg").forEach(el => el.classList.remove("highlighted-bg"));
+            var schR = document.getElementById("schRippleGroup");
+            if (schR) schR.innerHTML = "";
+            var pcbR = document.getElementById("pcbRippleGroup");
+            if (pcbR) pcbR.innerHTML = "";
             var infoPanel = document.getElementById("schInfoPanel");
             if (infoPanel) infoPanel.style.display = "none";
         }
