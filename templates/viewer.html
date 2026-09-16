@@ -3175,10 +3175,10 @@
                 el.setAttribute("x", "0");
                 el.setAttribute("y", "0");
                 if (angle === 270) {
-                    el.setAttribute("transform", `translate(${x}, ${-y}) rotate(-90) scale(1, -1)`);
+                    el.setAttribute("transform", `translate(${x}, ${-y}) scale(-1, 1) rotate(-90)`);
                     el.setAttribute("text-anchor", "end");
                 } else if (angle === 90) {
-                    el.setAttribute("transform", `translate(${x}, ${-y}) rotate(90) scale(1, -1)`);
+                    el.setAttribute("transform", `translate(${x}, ${-y}) scale(-1, 1) rotate(90)`);
                     el.setAttribute("text-anchor", "start");
                 } else if (angle === 180) {
                     el.setAttribute("transform", `translate(${x}, ${-y}) scale(-1, 1) rotate(180)`);
