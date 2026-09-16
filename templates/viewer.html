@@ -401,6 +401,22 @@
             font-weight: bold;
             font-size: 0.8px;
         }
+        .pcb-text-bottom {
+            fill: var(--pcb-bottom) !important;
+            stroke: var(--pcb-bottom);
+            stroke-width: 0.12px;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-weight: bold;
+            font-size: 0.8px;
+        }
+        .pcb-text-top {
+            fill: var(--pcb-top) !important;
+            stroke: var(--pcb-top);
+            stroke-width: 0.12px;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-weight: bold;
+            font-size: 0.8px;
+        }
         .layer-47 {
             stroke: #f59e0b !important;
             color: #f59e0b !important;
@@ -1563,9 +1579,44 @@
                 }
             });
 
-            // Capa 16 Bottom Tracks
+            // Capa 16 Bottom Tracks & Halos
             // 1. Halos de aislamiento contra planos de masa (se dibujan debajo de todas las pistas)
             if (hasBottomPoly) {
+                // Aislamiento para agujeros mecánicos (Holes) en plano de masa
+                if (EAGLE_DATA.board.holes) {
+                    EAGLE_DATA.board.holes.forEach(h => {
+                        var hClear = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        hClear.setAttribute("cx", h.x);
+                        hClear.setAttribute("cy", -h.y);
+                        hClear.setAttribute("r", (h.drill / 2) + 0.6);
+                        hClear.setAttribute("class", "pcb-wire-halo layer-16");
+                        hClear.style.fill = "#000000";
+                        hClear.style.stroke = "none";
+                        groupBottom.appendChild(hClear);
+                    });
+                }
+                // Aislamiento para áreas bRestrict (Capa 42)
+                if (EAGLE_DATA.board.plain) {
+                    EAGLE_DATA.board.plain.forEach(item => {
+                        if (item.layer === 42) {
+                            if (item.type === "wire") {
+                                var rHalo = createSvgWire(item, "pcb-wire-halo layer-16");
+                                rHalo.style.stroke = "#000000";
+                                rHalo.style.strokeWidth = (parseFloat(item.width) + 0.8) + "px";
+                                groupBottom.appendChild(rHalo);
+                            } else if (item.type === "rectangle") {
+                                var rRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                                rRect.setAttribute("x", Math.min(item.x1, item.x2));
+                                rRect.setAttribute("y", -Math.max(item.y1, item.y2));
+                                rRect.setAttribute("width", Math.abs(item.x2 - item.x1));
+                                rRect.setAttribute("height", Math.abs(item.y2 - item.y1));
+                                rRect.style.fill = "#000000";
+                                groupBottom.appendChild(rRect);
+                            }
+                        }
+                    });
+                }
+                // Aislamiento para pistas
                 EAGLE_DATA.board.signals.forEach(sig => {
                     sig.wires.forEach(w => {
                         if (w.layer === 16) {
@@ -1610,9 +1661,43 @@
                 }
             });
 
-            // Capa 1 Top Tracks
+            // Capa 1 Top Tracks & Halos
             // 1. Halos de aislamiento contra planos de masa (se dibujan debajo de todas las pistas)
             if (hasTopPoly) {
+                // Aislamiento para agujeros mecánicos (Holes) en plano de masa
+                if (EAGLE_DATA.board.holes) {
+                    EAGLE_DATA.board.holes.forEach(h => {
+                        var hClear = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                        hClear.setAttribute("cx", h.x);
+                        hClear.setAttribute("cy", -h.y);
+                        hClear.setAttribute("r", (h.drill / 2) + 0.6);
+                        hClear.setAttribute("class", "pcb-wire-halo layer-1");
+                        hClear.style.fill = "#000000";
+                        hClear.style.stroke = "none";
+                        groupTop.appendChild(hClear);
+                    });
+                }
+                // Aislamiento para áreas tRestrict (Capa 41)
+                if (EAGLE_DATA.board.plain) {
+                    EAGLE_DATA.board.plain.forEach(item => {
+                        if (item.layer === 41) {
+                            if (item.type === "wire") {
+                                var rHalo = createSvgWire(item, "pcb-wire-halo layer-1");
+                                rHalo.style.stroke = "#000000";
+                                rHalo.style.strokeWidth = (parseFloat(item.width) + 0.8) + "px";
+                                groupTop.appendChild(rHalo);
+                            } else if (item.type === "rectangle") {
+                                var rRect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                                rRect.setAttribute("x", Math.min(item.x1, item.x2));
+                                rRect.setAttribute("y", -Math.max(item.y1, item.y2));
+                                rRect.setAttribute("width", Math.abs(item.x2 - item.x1));
+                                rRect.setAttribute("height", Math.abs(item.y2 - item.y1));
+                                rRect.style.fill = "#000000";
+                                groupTop.appendChild(rRect);
+                            }
+                        }
+                    });
+                }
                 EAGLE_DATA.board.signals.forEach(sig => {
                     sig.wires.forEach(w => {
                         if (w.layer === 1) {
@@ -1754,15 +1839,55 @@
                     }
                     else if (item.type === "text") {
                         var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                        text.setAttribute("x", item.x);
-                        text.setAttribute("y", -item.y);
-                        text.setAttribute("class", `pcb-silk-text ${layerClass}`);
                         var tAngle = getRotationAngle(item.rot);
-                        if (tAngle !== 0) {
-                            text.setAttribute("transform", `rotate(${-tAngle}, ${item.x}, ${-item.y})`);
+                        var tMirrored = isMirrored(item.rot);
+
+                        var isCopper = (item.layer === 1 || item.layer === 16);
+                        var targetGroup = groupText;
+                        if (item.layer === 1) targetGroup = groupTop;
+                        else if (item.layer === 16) targetGroup = groupBottom;
+
+                        var cls = isCopper ? (item.layer === 1 ? "pcb-text-top" : "pcb-text-bottom") : "pcb-silk-text";
+                        text.setAttribute("class", `${cls} ${layerClass}`);
+
+                        if (item.size) {
+                            text.style.fontSize = `${item.size}px`;
                         }
+
+                        if (tMirrored) {
+                            text.setAttribute("x", "0");
+                            text.setAttribute("y", "0");
+                            text.setAttribute("transform", `translate(${item.x}, ${-item.y}) scale(-1, 1) rotate(${-tAngle + 180})`);
+                            text.setAttribute("text-anchor", "end");
+                        } else {
+                            text.setAttribute("x", item.x);
+                            text.setAttribute("y", -item.y);
+                            if (tAngle !== 0) {
+                                text.setAttribute("transform", `rotate(${-tAngle}, ${item.x}, ${-item.y})`);
+                            }
+                        }
+
+                        // Si es texto en plano de cobre (como UNO TH Rev3e en Capa 16) y hay polígono, crear halo de aislamiento
+                        if (item.layer === 16 && hasBottomPoly) {
+                            var haloText = text.cloneNode(true);
+                            haloText.setAttribute("class", "pcb-wire-halo layer-16");
+                            haloText.style.stroke = "#000000";
+                            haloText.style.strokeWidth = "0.5px";
+                            haloText.style.fill = "#000000";
+                            haloText.style.strokeLinejoin = "round";
+                            groupBottom.appendChild(haloText);
+                        } else if (item.layer === 1 && hasTopPoly) {
+                            var haloText = text.cloneNode(true);
+                            haloText.setAttribute("class", "pcb-wire-halo layer-1");
+                            haloText.style.stroke = "#000000";
+                            haloText.style.strokeWidth = "0.5px";
+                            haloText.style.fill = "#000000";
+                            haloText.style.strokeLinejoin = "round";
+                            groupTop.appendChild(haloText);
+                        }
+
                         text.textContent = item.text;
-                        groupText.appendChild(text);
+                        targetGroup.appendChild(text);
                     }
                 });
             }
@@ -2099,15 +2224,66 @@
                 }
             });
 
-            // Agujeros directos en la placa (Board Holes Capa 45)
+            // Agujeros mecánicos directos en la placa (Board Holes Capa 45) con mirilla CAD
             if (EAGLE_DATA.board.holes) {
                 EAGLE_DATA.board.holes.forEach(h => {
-                    var holeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    holeCircle.setAttribute("cx", h.x);
-                    holeCircle.setAttribute("cy", -h.y);
-                    holeCircle.setAttribute("r", h.drill / 2);
-                    holeCircle.setAttribute("class", "pcb-pad-hole layer-45");
-                    groupDrills.appendChild(holeCircle);
+                    var r = h.drill / 2;
+                    var gHole = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    gHole.setAttribute("class", "layer-45");
+
+                    // 1. Orificio físico central (negro para perforar todas las capas)
+                    var inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    inner.setAttribute("cx", h.x);
+                    inner.setAttribute("cy", -h.y);
+                    inner.setAttribute("r", r);
+                    inner.setAttribute("class", "pcb-pad-hole layer-45");
+                    gHole.appendChild(inner);
+
+                    // 2. Anillo perimetral del taladro (blanco / gris claro)
+                    var border = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    border.setAttribute("cx", h.x);
+                    border.setAttribute("cy", -h.y);
+                    border.setAttribute("r", r);
+                    border.setAttribute("fill", "none");
+                    border.setAttribute("stroke", "#ffffff");
+                    border.setAttribute("stroke-width", "0.15");
+                    border.setAttribute("class", "layer-45");
+                    gHole.appendChild(border);
+
+                    // 3. Círculo concéntrico interior de mirilla
+                    var reticle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    reticle.setAttribute("cx", h.x);
+                    reticle.setAttribute("cy", -h.y);
+                    reticle.setAttribute("r", r * 0.45);
+                    reticle.setAttribute("fill", "none");
+                    reticle.setAttribute("stroke", "#ffffff");
+                    reticle.setAttribute("stroke-width", "0.12");
+                    reticle.setAttribute("class", "layer-45");
+                    gHole.appendChild(reticle);
+
+                    // 4. Cruceta central (+)
+                    var cLen = r * 1.35;
+                    var lineH = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    lineH.setAttribute("x1", h.x - cLen);
+                    lineH.setAttribute("y1", -h.y);
+                    lineH.setAttribute("x2", h.x + cLen);
+                    lineH.setAttribute("y2", -h.y);
+                    lineH.setAttribute("stroke", "#ffffff");
+                    lineH.setAttribute("stroke-width", "0.12");
+                    lineH.setAttribute("class", "layer-45");
+                    gHole.appendChild(lineH);
+
+                    var lineV = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                    lineV.setAttribute("x1", h.x);
+                    lineV.setAttribute("y1", -h.y - cLen);
+                    lineV.setAttribute("x2", h.x);
+                    lineV.setAttribute("y2", -h.y + cLen);
+                    lineV.setAttribute("stroke", "#ffffff");
+                    lineV.setAttribute("stroke-width", "0.12");
+                    lineV.setAttribute("class", "layer-45");
+                    gHole.appendChild(lineV);
+
+                    groupDrills.appendChild(gHole);
                     USED_LAYERS.add(45);
                 });
             }

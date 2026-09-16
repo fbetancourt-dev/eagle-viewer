@@ -525,6 +525,13 @@ class EagleParser:
                 self.data["board"]["dimension"].append(wire_data)
             else:
                 dest_list.append(wire_data)
+        if is_board:
+            for h in plain_node.findall("hole"):
+                self.data["board"]["holes"].append({
+                    "x": float(h.get("x", 0)),
+                    "y": float(h.get("y", 0)),
+                    "drill": float(h.get("drill", 0.5))
+                })
         for t in plain_node.findall("text"):
             dest_list.append({
                 "type": "text",
