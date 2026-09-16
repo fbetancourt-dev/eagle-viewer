@@ -338,7 +338,8 @@ class EagleParser:
                                 "y2": float(w.get("y2", 0)),
                                 "width": float(w.get("width", 0.127)),
                                 "layer": int(w.get("layer", 21)),
-                                "curve": float(curve) if curve is not None else None
+                                "curve": float(curve) if curve is not None else None,
+                                "cap": w.get("cap")
                             })
                         for s in pkg.findall("smd"):
                             pkg_data["smds"].append({
@@ -455,7 +456,8 @@ class EagleParser:
                         "y2": float(w.get("y2", 0)),
                         "width": float(w.get("width", 0.254)),
                         "layer": int(w.get("layer", 1)),
-                        "curve": float(curve) if curve is not None else None
+                        "curve": float(curve) if curve is not None else None,
+                        "cap": w.get("cap")
                     })
                 for v in sig.findall("via"):
                     drill_val = float(v.get("drill", 0.6096))
@@ -519,7 +521,8 @@ class EagleParser:
                 "y2": float(w.get("y2", 0)),
                 "width": float(w.get("width", 0.15)),
                 "layer": layer_num,
-                "curve": float(curve) if curve is not None else None
+                "curve": float(curve) if curve is not None else None,
+                "cap": w.get("cap")
             }
             if is_board and layer_num == 20:
                 self.data["board"]["dimension"].append(wire_data)

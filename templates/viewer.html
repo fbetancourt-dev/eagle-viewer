@@ -311,12 +311,12 @@
             stroke: var(--pcb-silk);
             stroke-width: 0.15;
             fill: none;
-            opacity: 0.6;
+            opacity: 0.95;
             stroke-linecap: round;
         }
         .pcb-silk-poly {
             fill: var(--pcb-silk);
-            opacity: 0.4;
+            opacity: 0.85;
         }
         
         /* ESTADO SIN RATSNEST (Por defecto): Contorno punteado clásico de Eagle CAD */
@@ -833,6 +833,29 @@
                 
                 var rotAngle = Math.atan2(y2-y1, x2-x1) * 180.0 / Math.PI;
                 var radius = Math.abs(length / Math.sin(arcAngle / 2.0)) / 2.0;
+
+                // En EAGLE CAD, arcos de 180 grados con cap="flat" y grosor mayor que la cuerda
+                // (idioma oficial de EAGLE para pads D-shape y solder jumpers como en jumper.lbr)
+                // generan un semicírculo sólido recortado limpiamente en su diámetro plano.
+                if (Math.abs(Math.abs(w.curve) - 180.0) < 1.0 && w.cap === "flat" && w.width && (w.width > length)) {
+                    var R = radius + (w.width / 2.0);
+                    var cx = (x1 + x2) / 2.0;
+                    var cy = (y1 + y2) / 2.0;
+                    var ux = (x2 - x1) / length;
+                    var uy = (y2 - y1) / length;
+                    var bx1 = cx - ux * R;
+                    var by1 = cy - uy * R;
+                    var bx2 = cx + ux * R;
+                    var by2 = cy + uy * R;
+                    var sweep = (w.curve < 0.0) ? '1' : '0';
+                    var dPath = `M ${bx1} ${by1} A ${R} ${R} 0 0 ${sweep} ${bx2} ${by2} Z`;
+                    var dShape = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                    dShape.setAttribute("d", dPath);
+                    dShape.setAttribute("class", defaultClass);
+                    dShape.style.fill = "var(--pcb-silk)";
+                    dShape.style.stroke = "none";
+                    return dShape;
+                }
                 
                 var largeArc = (Math.abs(w.curve) > 180.0) ? '1' : '0';
                 // Eagle CW (curve<0) → SVG CW (sweep=1). Negating y preserves rotational direction.
@@ -843,8 +866,8 @@
                 path.setAttribute("class", defaultClass);
                 var strokeW = resolveStrokeW(w.width);
                 if (strokeW) path.style.strokeWidth = strokeW;
-                // cap="flat" en Eagle → stroke-linecap: butt (default SVG, pero lo forzamos)
-                path.style.strokeLinecap = (w.cap === "round") ? "round" : "butt";
+                // cap="flat" en Eagle -> stroke-linecap: butt, por defecto en Eagle los trazos tienen terminal redondo
+                path.style.strokeLinecap = (w.cap === "flat") ? "butt" : "round";
                 path.style.fill = "none";
                 return path;
             } else {
@@ -856,6 +879,7 @@
                 line.setAttribute("class", defaultClass);
                 var strokeW = resolveStrokeW(w.width);
                 if (strokeW) line.style.strokeWidth = strokeW;
+                line.style.strokeLinecap = (w.cap === "flat") ? "butt" : "round";
                 return line;
             }
         }
@@ -1892,6 +1916,33 @@
                 });
             }
 
+            function getEffectiveLayer(layer, mirrored) {
+                if (!mirrored) return layer;
+                switch(layer) {
+                    case 1: return 16;
+                    case 16: return 1;
+                    case 21: return 22;
+                    case 22: return 21;
+                    case 23: return 24;
+                    case 24: return 23;
+                    case 25: return 26;
+                    case 26: return 25;
+                    case 27: return 28;
+                    case 28: return 27;
+                    case 29: return 30;
+                    case 30: return 29;
+                    case 31: return 32;
+                    case 32: return 31;
+                    case 39: return 40;
+                    case 40: return 39;
+                    case 41: return 42;
+                    case 42: return 41;
+                    case 51: return 52;
+                    case 52: return 51;
+                    default: return layer;
+                }
+            }
+
             // Renderizado de Componentes por Capas (Elements)
             EAGLE_DATA.board.elements.forEach(elem => {
                 var pkgKey = `${elem.library}_${elem.package}`;
@@ -1907,12 +1958,15 @@
                 var nameLayerNum = mirrored ? 26 : 25;
 
                 if (pkg) {
-                    // SMD Pads con roundness respetado
+                    // SMD Pads con roundness respetado y aislamiento
                     if (pkg.smds && pkg.smds.length > 0) {
                         var gTopSmd = null;
                         var gBottomSmd = null;
+                        var gTopHalo = null;
+                        var gBottomHalo = null;
 
                         pkg.smds.forEach(s => {
+                            var effLayer = getEffectiveLayer(s.layer || 1, mirrored);
                             var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                             rect.setAttribute("x", s.x - s.dx / 2);
                             rect.setAttribute("y", -s.y - s.dy / 2);
@@ -1925,17 +1979,45 @@
                                 rect.setAttribute("ry", rCorner);
                             }
 
-                            var layerNum = s.layer === 1 ? 1 : 16;
-                            var smdClass = s.layer === 1 ? "pcb-pad-smd-top layer-1" : "pcb-pad-smd-bottom layer-16";
+                            var smdClass = (effLayer === 1) ? "pcb-pad-smd-top layer-1" : "pcb-pad-smd-bottom layer-16";
                             rect.setAttribute("class", smdClass);
-                            USED_LAYERS.add(layerNum);
+                            USED_LAYERS.add(effLayer);
 
                             var smdAngle = getRotationAngle(s.rot);
                             if (smdAngle !== 0) {
                                 rect.setAttribute("transform", `rotate(${-smdAngle}, ${s.x}, ${-s.y})`);
                             }
 
-                            if (s.layer === 1) {
+                            // Halo de aislamiento para SMD contra polígonos de cobre
+                            if (effLayer === 16 && hasBottomPoly) {
+                                var haloRect = rect.cloneNode(true);
+                                haloRect.setAttribute("class", "pcb-wire-halo layer-16");
+                                haloRect.style.fill = "#000000";
+                                haloRect.style.stroke = "#000000";
+                                haloRect.style.strokeWidth = "0.8px";
+                                haloRect.style.strokeLinejoin = "round";
+                                if (!gBottomHalo) {
+                                    gBottomHalo = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                                    gBottomHalo.setAttribute("transform", transformStr);
+                                    groupBottom.appendChild(gBottomHalo);
+                                }
+                                gBottomHalo.appendChild(haloRect);
+                            } else if (effLayer === 1 && hasTopPoly) {
+                                var haloRect = rect.cloneNode(true);
+                                haloRect.setAttribute("class", "pcb-wire-halo layer-1");
+                                haloRect.style.fill = "#000000";
+                                haloRect.style.stroke = "#000000";
+                                haloRect.style.strokeWidth = "0.8px";
+                                haloRect.style.strokeLinejoin = "round";
+                                if (!gTopHalo) {
+                                    gTopHalo = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                                    gTopHalo.setAttribute("transform", transformStr);
+                                    groupTop.appendChild(gTopHalo);
+                                }
+                                gTopHalo.appendChild(haloRect);
+                            }
+
+                            if (effLayer === 1) {
                                 if (!gTopSmd) {
                                     gTopSmd = document.createElementNS("http://www.w3.org/2000/svg", "g");
                                     gTopSmd.setAttribute("class", "interactive-part");
@@ -2095,7 +2177,7 @@
 
                         if (pkg.polygons) {
                             pkg.polygons.forEach(poly => {
-                                var pLayerNum = poly.layer ? (mirrored ? (poly.layer === 21 ? 22 : (poly.layer === 22 ? 21 : poly.layer)) : poly.layer) : silkLayerNum;
+                                var pLayerNum = getEffectiveLayer(poly.layer || (mirrored ? 22 : 21), mirrored);
                                 var el = createSvgPolygon(poly, `pcb-silk-poly layer-${pLayerNum}`);
                                 gSilk.appendChild(el);
                                 USED_LAYERS.add(pLayerNum);
@@ -2104,7 +2186,7 @@
 
                         if (pkg.wires) {
                             pkg.wires.forEach(w => {
-                                var wLayerNum = w.layer ? (mirrored ? (w.layer === 21 ? 22 : (w.layer === 22 ? 21 : w.layer)) : w.layer) : silkLayerNum;
+                                var wLayerNum = getEffectiveLayer(w.layer || (mirrored ? 22 : 21), mirrored);
                                 var el = createSvgWire(w, `pcb-silk-wire layer-${wLayerNum}`);
                                 gSilk.appendChild(el);
                                 USED_LAYERS.add(wLayerNum);
@@ -2113,12 +2195,13 @@
 
                         if (pkg.circles) {
                             pkg.circles.forEach(c => {
-                                var cLayerNum = c.layer ? (mirrored ? (c.layer === 21 ? 22 : (c.layer === 22 ? 21 : c.layer)) : c.layer) : silkLayerNum;
+                                var cLayerNum = getEffectiveLayer(c.layer || (mirrored ? 22 : 21), mirrored);
                                 var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                                 circle.setAttribute("cx", c.x);
                                 circle.setAttribute("cy", -c.y);
                                 circle.setAttribute("r", c.radius);
                                 circle.setAttribute("class", `pcb-silk-wire layer-${cLayerNum}`);
+                                if (c.width) circle.style.strokeWidth = c.width;
                                 gSilk.appendChild(circle);
                                 USED_LAYERS.add(cLayerNum);
                             });
@@ -2138,7 +2221,7 @@
                         var attrText = document.createElementNS("http://www.w3.org/2000/svg", "text");
                         attrText.setAttribute("x", attr.x);
                         attrText.setAttribute("y", -attr.y);
-                        var aLayerNum = attr.layer || (mirrored ? 26 : 25);
+                        var aLayerNum = attr.layer ? getEffectiveLayer(attr.layer, mirrored) : (mirrored ? 26 : 25);
                         attrText.setAttribute("class", `pcb-silk-text layer-${aLayerNum} interactive-part-text`);
                         attrText.setAttribute("data-part", elem.name);
                         USED_LAYERS.add(aLayerNum);
