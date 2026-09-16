@@ -348,6 +348,7 @@ class EagleParser:
                                 "dx": float(s.get("dx", 0)),
                                 "dy": float(s.get("dy", 0)),
                                 "layer": int(s.get("layer", 1)),
+                                "roundness": float(s.get("roundness", 0)),
                                 "rot": s.get("rot", "R0")
                             })
                         for p in pkg.findall("pad"):
@@ -402,6 +403,26 @@ class EagleParser:
         elements_node = board_node.find("elements")
         if elements_node is not None:
             for elem in elements_node.findall("element"):
+                elem_smashed = elem.get("smashed", "no").lower() in ["yes", "true", "1"]
+                elem_attrs = []
+                for attr in elem.findall("attribute"):
+                    if attr.get("display") != "off" and "x" in attr.attrib and "y" in attr.attrib:
+                        attr_name = attr.get("name")
+                        val = attr.get("value", "")
+                        if attr_name == "NAME":
+                            val = elem.get("name")
+                        elif attr_name == "VALUE":
+                            val = elem.get("value", "")
+                        elem_attrs.append({
+                            "name": attr_name,
+                            "value": val,
+                            "x": float(attr.get("x", 0)),
+                            "y": float(attr.get("y", 0)),
+                            "size": float(attr.get("size", 1.0)),
+                            "layer": int(attr.get("layer", 25)),
+                            "rot": attr.get("rot", "R0"),
+                            "ratio": int(attr.get("ratio", 8))
+                        })
                 self.data["board"]["elements"].append({
                     "name": elem.get("name"),
                     "library": elem.get("library"),
@@ -409,7 +430,9 @@ class EagleParser:
                     "value": elem.get("value", ""),
                     "x": float(elem.get("x", 0)),
                     "y": float(elem.get("y", 0)),
-                    "rot": elem.get("rot", "R0")
+                    "rot": elem.get("rot", "R0"),
+                    "smashed": elem_smashed,
+                    "attributes": elem_attrs
                 })
 
         # 3. Parsear señales, pistas, vías y pads

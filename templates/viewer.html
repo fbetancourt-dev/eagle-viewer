@@ -350,6 +350,14 @@
             font-weight: bold;
             font-size: 0.8px;
         }
+        .layer-47 {
+            stroke: #f59e0b !important;
+            color: #f59e0b !important;
+        }
+        text.layer-47 {
+            fill: #f59e0b !important;
+            stroke: none !important;
+        }
 
         /* Resaltados (Cross-probing) de Alta Fidelidad Vectorial */
         .interactive-part {
@@ -1306,6 +1314,77 @@
             }
         }
 
+        function buildDimensionPath(dimensionWires) {
+            if (!dimensionWires || dimensionWires.length === 0) return null;
+            var wires = dimensionWires.map(w => ({
+                x1: parseFloat(w.x1),
+                y1: parseFloat(w.y1),
+                x2: parseFloat(w.x2),
+                y2: parseFloat(w.y2),
+                curve: parseFloat(w.curve || 0)
+            }));
+
+            var loop = [wires[0]];
+            var unused = wires.slice(1);
+            var maxIter = wires.length * 2;
+            var iter = 0;
+
+            while (unused.length > 0 && iter < maxIter) {
+                iter++;
+                var currEnd = { x: loop[loop.length - 1].x2, y: loop[loop.length - 1].y2 };
+                var found = false;
+                for (var i = 0; i < unused.length; i++) {
+                    var w = unused[i];
+                    if (Math.hypot(w.x1 - currEnd.x, w.y1 - currEnd.y) < 0.05) {
+                        loop.push(unused.splice(i, 1)[0]);
+                        found = true;
+                        break;
+                    } else if (Math.hypot(w.x2 - currEnd.x, w.y2 - currEnd.y) < 0.05) {
+                        var revW = {
+                            x1: w.x2, y1: w.y2,
+                            x2: w.x1, y2: w.y1,
+                            curve: -w.curve
+                        };
+                        loop.push(revW);
+                        unused.splice(i, 1);
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) break;
+            }
+
+            if (loop.length < 3) return null;
+
+            var dParts = [`M ${loop[0].x1} ${-loop[0].y1}`];
+            for (var j = 0; j < loop.length; j++) {
+                var seg = loop[j];
+                var x1 = seg.x1;
+                var y1 = -seg.y1;
+                var x2 = seg.x2;
+                var y2 = -seg.y2;
+                var c = seg.curve;
+
+                if (Math.abs(c) > 0.001) {
+                    var arcAngle = c * Math.PI / 180.0;
+                    var len = Math.hypot(x2 - x1, y2 - y1);
+                    if (Math.abs(Math.sin(arcAngle / 2.0)) > 0.001) {
+                        var radius = Math.abs(len / Math.sin(arcAngle / 2.0)) / 2.0;
+                        var largeArc = Math.abs(c) > 180.0 ? '1' : '0';
+                        var sweep = c < 0.0 ? '1' : '0';
+                        var rotAngle = Math.atan2(y2 - y1, x2 - x1) * 180.0 / Math.PI;
+                        dParts.push(`A ${radius.toFixed(4)} ${radius.toFixed(4)} ${rotAngle.toFixed(2)} ${largeArc} ${sweep} ${x2.toFixed(4)} ${y2.toFixed(4)}`);
+                    } else {
+                        dParts.push(`L ${x2.toFixed(4)} ${y2.toFixed(4)}`);
+                    }
+                } else {
+                    dParts.push(`L ${x2.toFixed(4)} ${y2.toFixed(4)}`);
+                }
+            }
+            dParts.push('Z');
+            return dParts.join(' ');
+        }
+
         function renderBoard() {
             var viewport = document.getElementById("pcbViewport");
             viewport.innerHTML = "";
@@ -1319,7 +1398,31 @@
                 maxY = Math.max(maxY, d.y1, d.y2);
             });
 
-            if (minX < maxX) {
+            // 1. Defs con ClipPath del contorno físico de la placa
+            var defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+            viewport.appendChild(defs);
+
+            var dimPathStr = buildDimensionPath(EAGLE_DATA.board.dimension);
+            if (dimPathStr) {
+                var clip = document.createElementNS("http://www.w3.org/2000/svg", "clipPath");
+                clip.setAttribute("id", "pcbBoardOutlineClip");
+                var clipPathEl = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                clipPathEl.setAttribute("d", dimPathStr);
+                clip.appendChild(clipPathEl);
+                defs.appendChild(clip);
+            }
+
+            // 2. Sustrato físico de la placa (negro PCB)
+            if (dimPathStr) {
+                var substrate = document.createElementNS("http://www.w3.org/2000/svg", "path");
+                substrate.setAttribute("d", dimPathStr);
+                substrate.setAttribute("fill", "#000000");
+                substrate.setAttribute("stroke", "#ffffff");
+                substrate.setAttribute("stroke-width", 0.25);
+                substrate.setAttribute("class", "layer-20");
+                viewport.appendChild(substrate);
+                USED_LAYERS.add(20);
+            } else if (minX < maxX) {
                 var substrate = document.createElementNS("http://www.w3.org/2000/svg", "rect");
                 substrate.setAttribute("x", minX);
                 substrate.setAttribute("y", -maxY);
@@ -1335,19 +1438,24 @@
                 USED_LAYERS.add(20);
             }
 
+            // 3. Capa 20 Dimensión (Borde exterior blanco)
+            var groupDimension = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupDimension.setAttribute("id", "pcbDimensionGroup");
+            viewport.appendChild(groupDimension);
             EAGLE_DATA.board.dimension.forEach(d => {
                 var el = createSvgWire(d, "pcb-dim-wire layer-20");
-                viewport.appendChild(el);
+                groupDimension.appendChild(el);
                 USED_LAYERS.add(20);
             });
 
-            // Grupo de cobre Bottom (Capa 16 Azul) con mezcla aditiva
+            // 4. Grupo de cobre Bottom (Capa 16 Azul) con mezcla aditiva y recorte contra el borde de la placa
             var groupBottom = document.createElementNS("http://www.w3.org/2000/svg", "g");
             groupBottom.setAttribute("id", "pcbBottomCopperGroup");
             groupBottom.setAttribute("class", "pcb-blend-group");
+            if (dimPathStr) groupBottom.setAttribute("clip-path", "url(#pcbBoardOutlineClip)");
             viewport.appendChild(groupBottom);
 
-            // Capa 16 Bottom Polygons (azul)
+            // Capa 16 Bottom Polygons
             var hasBottomPoly = false;
             EAGLE_DATA.board.signals.forEach(sig => {
                 if (sig.polygons) {
@@ -1362,7 +1470,7 @@
                 }
             });
 
-            // Capa 16 Bottom Tracks (azul con halo de aislamiento)
+            // Capa 16 Bottom Tracks
             EAGLE_DATA.board.signals.forEach(sig => {
                 sig.wires.forEach(w => {
                     if (w.layer === 16) {
@@ -1378,13 +1486,14 @@
                 });
             });
 
-            // Grupo de cobre Top (Capa 1 Rojo) con mezcla aditiva
+            // 5. Grupo de cobre Top (Capa 1 Rojo) con mezcla aditiva y recorte contra el borde de la placa
             var groupTop = document.createElementNS("http://www.w3.org/2000/svg", "g");
             groupTop.setAttribute("id", "pcbTopCopperGroup");
             groupTop.setAttribute("class", "pcb-blend-group");
+            if (dimPathStr) groupTop.setAttribute("clip-path", "url(#pcbBoardOutlineClip)");
             viewport.appendChild(groupTop);
 
-            // Capa 1 Top Polygons (rojo)
+            // Capa 1 Top Polygons
             var hasTopPoly = false;
             EAGLE_DATA.board.signals.forEach(sig => {
                 if (sig.polygons) {
@@ -1399,7 +1508,7 @@
                 }
             });
 
-            // Capa 1 Top Tracks (rojo con halo de aislamiento)
+            // Capa 1 Top Tracks
             EAGLE_DATA.board.signals.forEach(sig => {
                 sig.wires.forEach(w => {
                     if (w.layer === 1) {
@@ -1415,32 +1524,53 @@
                 });
             });
 
-            // Capa 18 Vías
+            // 6. Grupo de Pads Pasantes (Capa 17 Verde) - Se dibujan encima de los cobres de superficie
+            var groupPads = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupPads.setAttribute("id", "pcbPadsGroup");
+            viewport.appendChild(groupPads);
+
+            // 7. Grupo de Vías (Capa 18)
+            var groupVias = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupVias.setAttribute("id", "pcbViasGroup");
+            viewport.appendChild(groupVias);
+
+            // 8. Grupo de Serigrafía y Documentación (Capas 21, 22, 51, 47...)
+            var groupSilk = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupSilk.setAttribute("id", "pcbSilkGroup");
+            viewport.appendChild(groupSilk);
+
+            // 9. Grupo de Textos (Capas 25, 26, 27, 28, 47...)
+            var groupText = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupText.setAttribute("id", "pcbTextGroup");
+            viewport.appendChild(groupText);
+
+            // 10. Grupo de Agujeros / Taladros (Capas 44, 45) - En lo más alto para perforar el cobre limpiamente
+            var groupDrills = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupDrills.setAttribute("id", "pcbDrillsGroup");
+            viewport.appendChild(groupDrills);
+
+            // Vías de señales (Capa 18 y 44)
             EAGLE_DATA.board.signals.forEach(sig => {
                 sig.vias.forEach(v => {
-                    var viaGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                    viaGroup.setAttribute("class", "layer-18");
-                    
-                    var outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    outer.setAttribute("cx", v.x);
-                    outer.setAttribute("cy", -v.y);
-                    outer.setAttribute("r", v.diameter / 2);
-                    outer.setAttribute("class", "pcb-via");
-                    
-                    var inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                    inner.setAttribute("cx", v.x);
-                    inner.setAttribute("cy", -v.y);
-                    inner.setAttribute("r", v.drill / 2);
-                    inner.setAttribute("class", "pcb-via-hole");
-                    
-                    viaGroup.appendChild(outer);
-                    viaGroup.appendChild(inner);
-                    viewport.appendChild(viaGroup);
+                    var viaOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    viaOuter.setAttribute("cx", v.x);
+                    viaOuter.setAttribute("cy", -v.y);
+                    viaOuter.setAttribute("r", v.diameter / 2);
+                    viaOuter.setAttribute("class", "pcb-via layer-18");
+                    groupVias.appendChild(viaOuter);
                     USED_LAYERS.add(18);
+
+                    var viaHole = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                    viaHole.setAttribute("cx", v.x);
+                    viaHole.setAttribute("cy", -v.y);
+                    viaHole.setAttribute("r", v.drill / 2);
+                    viaHole.setAttribute("class", "pcb-via-hole layer-44");
+                    groupDrills.appendChild(viaHole);
+                    USED_LAYERS.add(44);
                 });
             });
 
-            // Elementos planos libres (Plain) en cualquier capa (logos bitmaps, textos de autor, marcas, etc.)
+            // Elementos planos libres (Plain) en cualquier capa
             if (EAGLE_DATA.board.plain) {
                 EAGLE_DATA.board.plain.forEach(item => {
                     var layerClass = "layer-" + item.layer;
@@ -1448,19 +1578,19 @@
 
                     if (item.type === "wire") {
                         var defaultStyle = "pcb-silk-wire";
-                        if (item.layer === 1) defaultStyle = "pcb-wire-top";
-                        else if (item.layer === 16) defaultStyle = "pcb-wire-bottom";
-                        
+                        var targetGroup = groupSilk;
+                        if (item.layer === 1) { defaultStyle = "pcb-wire-top"; targetGroup = groupTop; }
+                        else if (item.layer === 16) { defaultStyle = "pcb-wire-bottom"; targetGroup = groupBottom; }
                         var el = createSvgWire(item, `${defaultStyle} ${layerClass}`);
-                        viewport.appendChild(el);
+                        targetGroup.appendChild(el);
                     }
                     else if (item.type === "polygon") {
                         var defaultStyle = "pcb-silk-poly";
-                        if (item.layer === 1) defaultStyle = "pcb-poly-top";
-                        else if (item.layer === 16) defaultStyle = "pcb-poly-bottom";
-                        
+                        var targetGroup = groupSilk;
+                        if (item.layer === 1) { defaultStyle = "pcb-poly-top"; targetGroup = groupTop; }
+                        else if (item.layer === 16) { defaultStyle = "pcb-poly-bottom"; targetGroup = groupBottom; }
                         var el = createSvgPolygon(item, `${defaultStyle} ${layerClass}`);
-                        viewport.appendChild(el);
+                        targetGroup.appendChild(el);
                     }
                     else if (item.type === "circle") {
                         var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1468,7 +1598,7 @@
                         circle.setAttribute("cy", -item.y);
                         circle.setAttribute("r", item.radius);
                         circle.setAttribute("class", `pcb-silk-wire ${layerClass}`);
-                        viewport.appendChild(circle);
+                        groupSilk.appendChild(circle);
                     }
                     else if (item.type === "rectangle") {
                         var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
@@ -1477,225 +1607,324 @@
                         rect.setAttribute("width", Math.abs(item.x2 - item.x1));
                         rect.setAttribute("height", Math.abs(item.y2 - item.y1));
                         rect.setAttribute("class", `pcb-silk-poly ${layerClass}`);
-                        viewport.appendChild(rect);
+                        groupSilk.appendChild(rect);
                     }
                     else if (item.type === "text") {
                         var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
                         text.setAttribute("x", item.x);
                         text.setAttribute("y", -item.y);
                         text.setAttribute("class", `pcb-silk-text ${layerClass}`);
-                        
                         var tAngle = getRotationAngle(item.rot);
                         if (tAngle !== 0) {
                             text.setAttribute("transform", `rotate(${-tAngle}, ${item.x}, ${-item.y})`);
                         }
                         text.textContent = item.text;
-                        viewport.appendChild(text);
+                        groupText.appendChild(text);
                     }
                 });
             }
 
-            // Capa 17 Pads Pasantes y Serigrafía de Componentes
+            // Renderizado de Componentes por Capas (Elements)
             EAGLE_DATA.board.elements.forEach(elem => {
                 var pkgKey = `${elem.library}_${elem.package}`;
                 var pkg = EAGLE_DATA.board.packages[pkgKey];
 
-                var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                g.setAttribute("class", "interactive-part");
-                g.setAttribute("data-part", elem.name);
-
                 var angle = getRotationAngle(elem.rot);
                 var mirrored = isMirrored(elem.rot);
                 var transformStr = `translate(${elem.x}, ${-elem.y}) `;
-                if (mirrored) {
-                    transformStr += `scale(-1, 1) `;
-                }
+                if (mirrored) transformStr += `scale(-1, 1) `;
                 transformStr += `rotate(${-angle})`;
-                g.setAttribute("transform", transformStr);
 
                 var silkLayerNum = mirrored ? 22 : 21;
                 var nameLayerNum = mirrored ? 26 : 25;
-                var silkLayer = "layer-" + silkLayerNum;
-                var nameLayer = "layer-" + nameLayerNum;
 
                 if (pkg) {
-                    if (pkg.polygons) {
-                        pkg.polygons.forEach(poly => {
-                            var el = createSvgPolygon(poly, `pcb-silk-poly ${silkLayer}`);
-                            g.appendChild(el);
-                            USED_LAYERS.add(silkLayerNum);
+                    // SMD Pads con roundness respetado
+                    if (pkg.smds && pkg.smds.length > 0) {
+                        var gTopSmd = null;
+                        var gBottomSmd = null;
+
+                        pkg.smds.forEach(s => {
+                            var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                            rect.setAttribute("x", s.x - s.dx / 2);
+                            rect.setAttribute("y", -s.y - s.dy / 2);
+                            rect.setAttribute("width", s.dx);
+                            rect.setAttribute("height", s.dy);
+
+                            if (s.roundness) {
+                                var rCorner = (Math.min(s.dx, s.dy) / 2.0) * (s.roundness / 100.0);
+                                rect.setAttribute("rx", rCorner);
+                                rect.setAttribute("ry", rCorner);
+                            }
+
+                            var layerNum = s.layer === 1 ? 1 : 16;
+                            var smdClass = s.layer === 1 ? "pcb-pad-smd-top layer-1" : "pcb-pad-smd-bottom layer-16";
+                            rect.setAttribute("class", smdClass);
+                            USED_LAYERS.add(layerNum);
+
+                            var smdAngle = getRotationAngle(s.rot);
+                            if (smdAngle !== 0) {
+                                rect.setAttribute("transform", `rotate(${-smdAngle}, ${s.x}, ${-s.y})`);
+                            }
+
+                            if (s.layer === 1) {
+                                if (!gTopSmd) {
+                                    gTopSmd = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                                    gTopSmd.setAttribute("class", "interactive-part");
+                                    gTopSmd.setAttribute("data-part", elem.name);
+                                    gTopSmd.setAttribute("transform", transformStr);
+                                    groupTop.appendChild(gTopSmd);
+                                }
+                                gTopSmd.appendChild(rect);
+                            } else {
+                                if (!gBottomSmd) {
+                                    gBottomSmd = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                                    gBottomSmd.setAttribute("class", "interactive-part");
+                                    gBottomSmd.setAttribute("data-part", elem.name);
+                                    gBottomSmd.setAttribute("transform", transformStr);
+                                    groupBottom.appendChild(gBottomSmd);
+                                }
+                                gBottomSmd.appendChild(rect);
+                            }
                         });
                     }
 
-                    pkg.wires.forEach(w => {
-                        var el = createSvgWire(w, `pcb-silk-wire ${silkLayer}`);
-                        g.appendChild(el);
-                        USED_LAYERS.add(silkLayerNum);
-                    });
-                    
-                    pkg.circles.forEach(c => {
-                        var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                        circle.setAttribute("cx", c.x);
-                        circle.setAttribute("cy", -c.y);
-                        circle.setAttribute("r", c.radius);
-                        circle.setAttribute("class", `pcb-silk-wire ${silkLayer}`);
-                        g.appendChild(circle);
-                        USED_LAYERS.add(silkLayerNum);
-                    });
+                    // Through-Hole Pads (Capa 17) y Taladros (Capa 44)
+                    if (pkg.pads && pkg.pads.length > 0) {
+                        var gPads = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        gPads.setAttribute("class", "interactive-part layer-17");
+                        gPads.setAttribute("data-part", elem.name);
+                        gPads.setAttribute("transform", transformStr);
+                        groupPads.appendChild(gPads);
 
-                    pkg.smds.forEach(s => {
-                        var rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                        rect.setAttribute("x", s.x - s.dx / 2);
-                        rect.setAttribute("y", -s.y - s.dy / 2);
-                        rect.setAttribute("width", s.dx);
-                        rect.setAttribute("height", s.dy);
-                        
-                        var layerNum = s.layer === 1 ? 1 : 16;
-                        var smdClass = s.layer === 1 ? "pcb-pad-smd-top layer-1" : "pcb-pad-smd-bottom layer-16";
-                        rect.setAttribute("class", smdClass);
-                        USED_LAYERS.add(layerNum);
-                        
-                        var smdAngle = getRotationAngle(s.rot);
-                        if (smdAngle !== 0) {
-                            rect.setAttribute("transform", `rotate(${-smdAngle}, ${s.x}, ${-s.y})`);
-                        }
-                        g.appendChild(rect);
-                    });
+                        var gDrills = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        gDrills.setAttribute("transform", transformStr);
+                        groupDrills.appendChild(gDrills);
 
-                    pkg.pads.forEach(p => {
-                        var padGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                        padGroup.setAttribute("class", "layer-17");
-                        var diameter = p.diameter || (p.drill * 1.6);
-                        var outer;
-                        
-                        if (p.shape === "square") {
-                            outer = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                            outer.setAttribute("x", p.x - diameter / 2);
-                            outer.setAttribute("y", -p.y - diameter / 2);
-                            outer.setAttribute("width", diameter);
-                            outer.setAttribute("height", diameter);
-                            outer.setAttribute("class", "pcb-pad-thru");
-                        } else if (p.shape === "octagonal") {
-                            outer = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
-                            var r = diameter / 2;
-                            var c = r * 0.414;
-                            var pts = [
-                                `${p.x - r},${-p.y - c}`,
-                                `${p.x - r},${-p.y + c}`,
-                                `${p.x - c},${-p.y + r}`,
-                                `${p.x + c},${-p.y + r}`,
-                                `${p.x + r},${-p.y + c}`,
-                                `${p.x + r},${-p.y - c}`,
-                                `${p.x + c},${-p.y - r}`,
-                                `${p.x - c},${-p.y - r}`
-                            ].join(" ");
-                            outer.setAttribute("points", pts);
-                            outer.setAttribute("class", "pcb-pad-thru");
-                        } else if (p.shape === "long") {
-                            var padRot = getRotationAngle(p.rot);
-                            var padLen = diameter * 2.0;
-                            var padW = diameter;
-                            var rCorner = diameter / 2.0;
-                            outer = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-                            outer.setAttribute("x", p.x - padLen / 2.0);
-                            outer.setAttribute("y", -p.y - padW / 2.0);
-                            outer.setAttribute("width", padLen);
-                            outer.setAttribute("height", padW);
-                            outer.setAttribute("rx", rCorner);
-                            outer.setAttribute("ry", rCorner);
-                            outer.setAttribute("class", "pcb-pad-thru");
-                            if (padRot !== 0) {
-                                outer.setAttribute("transform", `rotate(${-padRot}, ${p.x}, ${-p.y})`);
+                        pkg.pads.forEach(p => {
+                            var diameter = p.diameter || (p.drill * 1.6);
+                            var outer;
+
+                            if (p.shape === "square") {
+                                outer = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                                outer.setAttribute("x", p.x - diameter / 2);
+                                outer.setAttribute("y", -p.y - diameter / 2);
+                                outer.setAttribute("width", diameter);
+                                outer.setAttribute("height", diameter);
+                                outer.setAttribute("class", "pcb-pad-thru");
+                            } else if (p.shape === "octagonal") {
+                                outer = document.createElementNS("http://www.w3.org/2000/svg", "polygon");
+                                var r = diameter / 2;
+                                var c = r * 0.414;
+                                var pts = [
+                                    `${p.x - r},${-p.y - c}`,
+                                    `${p.x - r},${-p.y + c}`,
+                                    `${p.x - c},${-p.y + r}`,
+                                    `${p.x + c},${-p.y + r}`,
+                                    `${p.x + r},${-p.y + c}`,
+                                    `${p.x + r},${-p.y - c}`,
+                                    `${p.x + c},${-p.y - r}`,
+                                    `${p.x - c},${-p.y - r}`
+                                ].join(" ");
+                                outer.setAttribute("points", pts);
+                                outer.setAttribute("class", "pcb-pad-thru");
+                            } else if (p.shape === "long") {
+                                var padRot = getRotationAngle(p.rot);
+                                var padLen = diameter * 2.0;
+                                var padW = diameter;
+                                var rCorner = diameter / 2.0;
+                                outer = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                                outer.setAttribute("x", p.x - padLen / 2.0);
+                                outer.setAttribute("y", -p.y - padW / 2.0);
+                                outer.setAttribute("width", padLen);
+                                outer.setAttribute("height", padW);
+                                outer.setAttribute("rx", rCorner);
+                                outer.setAttribute("ry", rCorner);
+                                outer.setAttribute("class", "pcb-pad-thru");
+                                if (padRot !== 0) {
+                                    outer.setAttribute("transform", `rotate(${-padRot}, ${p.x}, ${-p.y})`);
+                                }
+                            } else {
+                                outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                                outer.setAttribute("cx", p.x);
+                                outer.setAttribute("cy", -p.y);
+                                outer.setAttribute("r", diameter / 2);
+                                outer.setAttribute("class", "pcb-pad-thru");
                             }
-                        } else {
-                            outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                            outer.setAttribute("cx", p.x);
-                            outer.setAttribute("cy", -p.y);
-                            outer.setAttribute("r", diameter / 2);
-                            outer.setAttribute("class", "pcb-pad-thru");
-                        }
-                        
-                        var inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-                        inner.setAttribute("cx", p.x);
-                        inner.setAttribute("cy", -p.y);
-                        inner.setAttribute("r", p.drill / 2);
-                        inner.setAttribute("class", "pcb-pad-hole");
-                        
-                        padGroup.appendChild(outer);
-                        padGroup.appendChild(inner);
-                        g.appendChild(padGroup);
-                        USED_LAYERS.add(17);
-                    });
+                            gPads.appendChild(outer);
+                            USED_LAYERS.add(17);
 
-                    if (pkg.holes) {
+                            var inner = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                            inner.setAttribute("cx", p.x);
+                            inner.setAttribute("cy", -p.y);
+                            inner.setAttribute("r", p.drill / 2);
+                            inner.setAttribute("class", "pcb-pad-hole layer-44");
+                            gDrills.appendChild(inner);
+                            USED_LAYERS.add(44);
+                        });
+                    }
+
+                    // Package Holes (Capa 45)
+                    if (pkg.holes && pkg.holes.length > 0) {
+                        var gHoles = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        gHoles.setAttribute("transform", transformStr);
+                        groupDrills.appendChild(gHoles);
+
                         pkg.holes.forEach(h => {
                             var holeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                             holeCircle.setAttribute("cx", h.x);
                             holeCircle.setAttribute("cy", -h.y);
                             holeCircle.setAttribute("r", h.drill / 2);
                             holeCircle.setAttribute("class", "pcb-pad-hole layer-45");
-                            g.appendChild(holeCircle);
+                            gHoles.appendChild(holeCircle);
                             USED_LAYERS.add(45);
                         });
                     }
 
-                    var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                    text.setAttribute("x", 0);
-                    text.setAttribute("y", 0);
-                    text.setAttribute("text-anchor", "middle");
-                    text.setAttribute("class", `pcb-silk-text ${nameLayer}`);
-                    if (mirrored) {
-                        text.setAttribute("transform", "scale(-1, 1)");
+                    // Serigrafía / Geometría del paquete (Polígonos, Wires, Circles)
+                    var hasSilkGeom = (pkg.polygons && pkg.polygons.length > 0) ||
+                                      (pkg.wires && pkg.wires.length > 0) ||
+                                      (pkg.circles && pkg.circles.length > 0);
+
+                    if (hasSilkGeom) {
+                        var gSilk = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                        gSilk.setAttribute("class", "interactive-part");
+                        gSilk.setAttribute("data-part", elem.name);
+                        gSilk.setAttribute("transform", transformStr);
+                        groupSilk.appendChild(gSilk);
+
+                        if (pkg.polygons) {
+                            pkg.polygons.forEach(poly => {
+                                var pLayerNum = poly.layer ? (mirrored ? (poly.layer === 21 ? 22 : (poly.layer === 22 ? 21 : poly.layer)) : poly.layer) : silkLayerNum;
+                                var el = createSvgPolygon(poly, `pcb-silk-poly layer-${pLayerNum}`);
+                                gSilk.appendChild(el);
+                                USED_LAYERS.add(pLayerNum);
+                            });
+                        }
+
+                        if (pkg.wires) {
+                            pkg.wires.forEach(w => {
+                                var wLayerNum = w.layer ? (mirrored ? (w.layer === 21 ? 22 : (w.layer === 22 ? 21 : w.layer)) : w.layer) : silkLayerNum;
+                                var el = createSvgWire(w, `pcb-silk-wire layer-${wLayerNum}`);
+                                gSilk.appendChild(el);
+                                USED_LAYERS.add(wLayerNum);
+                            });
+                        }
+
+                        if (pkg.circles) {
+                            pkg.circles.forEach(c => {
+                                var cLayerNum = c.layer ? (mirrored ? (c.layer === 21 ? 22 : (c.layer === 22 ? 21 : c.layer)) : c.layer) : silkLayerNum;
+                                var circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+                                circle.setAttribute("cx", c.x);
+                                circle.setAttribute("cy", -c.y);
+                                circle.setAttribute("r", c.radius);
+                                circle.setAttribute("class", `pcb-silk-wire layer-${cLayerNum}`);
+                                gSilk.appendChild(circle);
+                                USED_LAYERS.add(cLayerNum);
+                            });
+                        }
                     }
-                    text.textContent = elem.name;
-                    g.appendChild(text);
-                    USED_LAYERS.add(nameLayerNum);
-                    
+                }
+
+                // Textos y Atributos (Smashed vs Default Package Text)
+                if (elem.smashed && elem.attributes && elem.attributes.length > 0) {
+                    elem.attributes.forEach(attr => {
+                        if (!attr.name || attr.display === "off") return;
+                        var val = attr.value;
+                        if (attr.name === "NAME") val = elem.name;
+                        else if (attr.name === "VALUE") val = elem.value;
+                        if (!val) return;
+
+                        var attrText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        attrText.setAttribute("x", attr.x);
+                        attrText.setAttribute("y", -attr.y);
+                        var aLayerNum = attr.layer || (mirrored ? 26 : 25);
+                        attrText.setAttribute("class", `pcb-silk-text layer-${aLayerNum} interactive-part-text`);
+                        attrText.setAttribute("data-part", elem.name);
+                        USED_LAYERS.add(aLayerNum);
+
+                        var aRot = getRotationAngle(attr.rot);
+                        var aMirrored = isMirrored(attr.rot);
+                        var tf = "";
+                        if (aMirrored) tf += "scale(-1, 1) ";
+                        if (aRot !== 0) tf += `rotate(${-aRot}, ${attr.x}, ${-attr.y}) `;
+                        if (tf) attrText.setAttribute("transform", tf);
+
+                        if (attr.size) attrText.style.fontSize = `${attr.size}px`;
+                        attrText.textContent = val;
+                        groupText.appendChild(attrText);
+                    });
+                } else if (pkg && pkg.texts && pkg.texts.length > 0) {
+                    var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    gText.setAttribute("class", "interactive-part-text");
+                    gText.setAttribute("data-part", elem.name);
+                    gText.setAttribute("transform", transformStr);
+                    groupText.appendChild(gText);
+
+                    var hasExplicitName = false;
                     pkg.texts.forEach(t => {
                         var pText = document.createElementNS("http://www.w3.org/2000/svg", "text");
                         pText.setAttribute("x", t.x);
                         pText.setAttribute("y", -t.y);
-                        
+
                         var itemLayerNum = nameLayerNum;
-                        if (t.layer === 27 || t.layer === 28) {
-                            itemLayerNum = mirrored ? 28 : 27;
-                        } else if (t.layer === 22 || t.layer === 21) {
-                            itemLayerNum = mirrored ? 22 : 21;
-                        }
-                        
-                        var itemLayer = "layer-" + itemLayerNum;
-                        pText.setAttribute("class", `pcb-silk-text ${itemLayer}`);
+                        if (t.layer === 27 || t.layer === 28) itemLayerNum = mirrored ? 28 : 27;
+                        else if (t.layer === 22 || t.layer === 21) itemLayerNum = mirrored ? 22 : 21;
+                        else if (t.layer) itemLayerNum = t.layer;
+
+                        pText.setAttribute("class", `pcb-silk-text layer-${itemLayerNum}`);
                         USED_LAYERS.add(itemLayerNum);
-                        
+
                         var tAngle = getRotationAngle(t.rot);
                         var transformTextStr = "";
-                        if (mirrored) {
-                            transformTextStr += "scale(-1, 1) ";
-                        }
-                        if (tAngle !== 0) {
-                            transformTextStr += `rotate(${-tAngle}, ${t.x}, ${-t.y}) `;
-                        }
-                        if (transformTextStr !== "") {
-                            pText.setAttribute("transform", transformTextStr);
-                        }
-                        
+                        if (mirrored) transformTextStr += "scale(-1, 1) ";
+                        if (tAngle !== 0) transformTextStr += `rotate(${-tAngle}, ${t.x}, ${-t.y}) `;
+                        if (transformTextStr !== "") pText.setAttribute("transform", transformTextStr);
+
                         var val = t.text;
-                        if (val === ">NAME" || val === ">Name" || val === ">name") val = elem.name;
-                        else if (val === ">VALUE" || val === ">Value" || val === ">value") val = elem.value;
-                        
+                        if (val === ">NAME" || val === ">Name" || val === ">name") {
+                            val = elem.name;
+                            hasExplicitName = true;
+                        } else if (val === ">VALUE" || val === ">Value" || val === ">value") {
+                            val = elem.value;
+                        }
+                        if (t.size) pText.style.fontSize = `${t.size}px`;
+
                         pText.textContent = val;
-                        g.appendChild(pText);
+                        gText.appendChild(pText);
                     });
+
+                    if (!hasExplicitName && !elem.smashed) {
+                        var defText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                        defText.setAttribute("x", 0);
+                        defText.setAttribute("y", 0);
+                        defText.setAttribute("text-anchor", "middle");
+                        defText.setAttribute("class", `pcb-silk-text layer-${nameLayerNum}`);
+                        if (mirrored) defText.setAttribute("transform", "scale(-1, 1)");
+                        defText.textContent = elem.name;
+                        gText.appendChild(defText);
+                        USED_LAYERS.add(nameLayerNum);
+                    }
+                } else if (!elem.smashed) {
+                    var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    gText.setAttribute("class", "interactive-part-text");
+                    gText.setAttribute("data-part", elem.name);
+                    gText.setAttribute("transform", transformStr);
+                    groupText.appendChild(gText);
+
+                    var defText = document.createElementNS("http://www.w3.org/2000/svg", "text");
+                    defText.setAttribute("x", 0);
+                    defText.setAttribute("y", 0);
+                    defText.setAttribute("text-anchor", "middle");
+                    defText.setAttribute("class", `pcb-silk-text layer-${nameLayerNum}`);
+                    if (mirrored) defText.setAttribute("transform", "scale(-1, 1)");
+                    defText.textContent = elem.name;
+                    gText.appendChild(defText);
+                    USED_LAYERS.add(nameLayerNum);
                 }
-
-                g.onclick = function() {
-                    highlightPart(elem.name, elem.value, 'pcb');
-                };
-
-                viewport.appendChild(g);
             });
 
-            // Agujeros directos en la placa (Holes)
+            // Agujeros directos en la placa (Board Holes Capa 45)
             if (EAGLE_DATA.board.holes) {
                 EAGLE_DATA.board.holes.forEach(h => {
                     var holeCircle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
@@ -1703,7 +1932,7 @@
                     holeCircle.setAttribute("cy", -h.y);
                     holeCircle.setAttribute("r", h.drill / 2);
                     holeCircle.setAttribute("class", "pcb-pad-hole layer-45");
-                    viewport.appendChild(holeCircle);
+                    groupDrills.appendChild(holeCircle);
                     USED_LAYERS.add(45);
                 });
             }
@@ -1728,6 +1957,9 @@
                 if (num === 20) return "#475569";
                 if (num === 21 || num === 25) return "var(--pcb-silk)";
                 if (num === 22 || num === 26) return "#cbd5e1";
+                if (num === 44 || num === 45) return "#000000";
+                if (num === 47) return "#f59e0b";
+                if (num === 51 || num === 52) return "#64748b";
                 
                 var nameLower = name.toLowerCase();
                 if (nameLower.includes("top") || nameLower.startsWith("t")) return "var(--pcb-top)";
@@ -2238,14 +2470,30 @@
                 state.dragging = false;
             });
 
-            // Deseleccionar al hacer clic en área vacía
+            // Selección y Deselección delegada en SVG
             svg.addEventListener('click', function(e) {
                 if (state.wasDrag) {
                     state.wasDrag = false;
                     return;
                 }
                 var hitPart = e.target.closest('.interactive-part, .interactive-part-text, .pcb-element');
-                if (!hitPart) {
+                if (hitPart) {
+                    var partName = hitPart.getAttribute('data-part');
+                    if (partName) {
+                        var pVal = "";
+                        if (type === "pcb" && EAGLE_DATA.board && EAGLE_DATA.board.elements) {
+                            var pe = EAGLE_DATA.board.elements.find(e => e.name === partName);
+                            if (pe) pVal = pe.value;
+                        } else if (type === "sch" && EAGLE_DATA.schematic) {
+                            var inst = null;
+                            var sheet = getActiveSheet();
+                            if (sheet && sheet.instances) inst = sheet.instances.find(i => i.part === partName);
+                            if (!inst && EAGLE_DATA.schematic.instances) inst = EAGLE_DATA.schematic.instances.find(i => i.part === partName);
+                            if (inst) pVal = inst.value;
+                        }
+                        highlightPart(partName, pVal, type);
+                    }
+                } else {
                     clearSelection();
                 }
             });
