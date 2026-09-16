@@ -397,24 +397,23 @@
         }
         .pcb-silk-text {
             fill: var(--pcb-silk);
-            font-family: 'Courier New', 'Consolas', monospace;
-            font-weight: bold;
+            stroke: var(--pcb-silk);
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 500;
             font-size: 0.8px;
         }
         .pcb-text-bottom {
             fill: var(--pcb-bottom) !important;
-            stroke: var(--pcb-bottom);
-            stroke-width: 0.12px;
-            font-family: 'Courier New', 'Consolas', monospace;
-            font-weight: bold;
+            stroke: var(--pcb-bottom) !important;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 500;
             font-size: 0.8px;
         }
         .pcb-text-top {
             fill: var(--pcb-top) !important;
-            stroke: var(--pcb-top);
-            stroke-width: 0.12px;
-            font-family: 'Courier New', 'Consolas', monospace;
-            font-weight: bold;
+            stroke: var(--pcb-top) !important;
+            font-family: Arial, Helvetica, sans-serif;
+            font-weight: 500;
             font-size: 0.8px;
         }
         .layer-47 {
@@ -1940,6 +1939,10 @@
                         if (item.size) {
                             text.style.fontSize = `${item.size}px`;
                         }
+                        var strokeW = (item.size || 1.0) * ((item.ratio || 8) / 100.0);
+                        text.style.strokeWidth = `${strokeW}px`;
+                        text.style.strokeLinecap = 'round';
+                        text.style.strokeLinejoin = 'round';
 
                         applyEagleTextTransform(text, item.x, item.y, item.rot);
                         text.textContent = item.text;
@@ -1949,7 +1952,7 @@
                             var haloText = text.cloneNode(true);
                             haloText.setAttribute("class", "pcb-wire-halo layer-16");
                             haloText.style.stroke = "#000000";
-                            haloText.style.strokeWidth = "0.5px";
+                            haloText.style.strokeWidth = `${strokeW + 0.4}px`;
                             haloText.style.fill = "#000000";
                             haloText.style.strokeLinejoin = "round";
                             haloText.textContent = item.text;
@@ -1958,7 +1961,7 @@
                             var haloText = text.cloneNode(true);
                             haloText.setAttribute("class", "pcb-wire-halo layer-1");
                             haloText.style.stroke = "#000000";
-                            haloText.style.strokeWidth = "0.5px";
+                            haloText.style.strokeWidth = `${strokeW + 0.4}px`;
                             haloText.style.fill = "#000000";
                             haloText.style.strokeLinejoin = "round";
                             haloText.textContent = item.text;
@@ -2291,6 +2294,10 @@
                         applyEagleTextTransform(attrText, attr.x, attr.y, attr.rot);
 
                         if (attr.size) attrText.style.fontSize = `${attr.size}px`;
+                        var attrStrokeW = (attr.size || 1.0) * ((attr.ratio || 8) / 100.0);
+                        attrText.style.strokeWidth = `${attrStrokeW}px`;
+                        attrText.style.strokeLinecap = 'round';
+                        attrText.style.strokeLinejoin = 'round';
                         attrText.textContent = val;
                         groupText.appendChild(attrText);
 
@@ -2333,6 +2340,10 @@
                             val = elem.value;
                         }
                         if (t.size) pText.style.fontSize = `${t.size}px`;
+                        var tStrokeW = (t.size || 1.0) * ((t.ratio || 8) / 100.0);
+                        pText.style.strokeWidth = `${tStrokeW}px`;
+                        pText.style.strokeLinecap = 'round';
+                        pText.style.strokeLinejoin = 'round';
 
                         pText.textContent = val;
                         gText.appendChild(pText);
@@ -2345,6 +2356,10 @@
                         defText.setAttribute("text-anchor", "middle");
                         defText.setAttribute("class", `pcb-silk-text layer-${nameLayerNum}`);
                         if (mirrored) defText.setAttribute("transform", "scale(-1, 1)");
+                        defText.style.fontSize = "1.0px";
+                        defText.style.strokeWidth = "0.08px";
+                        defText.style.strokeLinecap = 'round';
+                        defText.style.strokeLinejoin = 'round';
                         defText.textContent = elem.name;
                         gText.appendChild(defText);
                         USED_LAYERS.add(nameLayerNum);
@@ -2362,6 +2377,10 @@
                     defText.setAttribute("text-anchor", "middle");
                     defText.setAttribute("class", `pcb-silk-text layer-${nameLayerNum}`);
                     if (mirrored) defText.setAttribute("transform", "scale(-1, 1)");
+                    defText.style.fontSize = "1.0px";
+                    defText.style.strokeWidth = "0.08px";
+                    defText.style.strokeLinecap = 'round';
+                    defText.style.strokeLinejoin = 'round';
                     defText.textContent = elem.name;
                     gText.appendChild(defText);
                     USED_LAYERS.add(nameLayerNum);

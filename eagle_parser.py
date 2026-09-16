@@ -369,7 +369,10 @@ class EagleParser:
                                 "y": float(t.get("y", 0)),
                                 "size": float(t.get("size", 1.0)),
                                 "layer": int(t.get("layer", 25)),
-                                "rot": t.get("rot", "R0")
+                                "rot": t.get("rot", "R0"),
+                                "ratio": int(t.get("ratio", 8)),
+                                "font": t.get("font", "vector"),
+                                "align": t.get("align", "bottom-left")
                             })
                         for h in pkg.findall("hole"):
                             pkg_data["holes"].append({
@@ -422,7 +425,9 @@ class EagleParser:
                             "size": float(attr.get("size", 1.0)),
                             "layer": int(attr.get("layer", 25)),
                             "rot": attr.get("rot", "R0"),
-                            "ratio": int(attr.get("ratio", 8))
+                            "ratio": int(attr.get("ratio", 8)),
+                            "font": attr.get("font", "vector"),
+                            "align": attr.get("align", "bottom-left")
                         })
                 self.data["board"]["elements"].append({
                     "name": elem.get("name"),
@@ -543,7 +548,10 @@ class EagleParser:
                 "y": float(t.get("y", 0)),
                 "size": float(t.get("size", 1.0)),
                 "layer": int(t.get("layer", 1)),
-                "rot": t.get("rot", "R0")
+                "rot": t.get("rot", "R0"),
+                "ratio": int(t.get("ratio", 8)),
+                "font": t.get("font", "vector"),
+                "align": t.get("align", "bottom-left")
             })
         for c in plain_node.findall("circle"):
             dest_list.append({
