@@ -45,10 +45,13 @@ flowchart TD
 
 ## ✨ Features
 
-- **Interactive Canvas & SVG Web Viewer:** Real-time panning, infinite zooming, layer filtering (Top copper, Bottom copper, Silkscreen, Solder Pads, Vias, Dimension border), and ratsnest unrouted airwire display in any modern browser.
+- **Interactive Canvas & Smooth Zoom/Pan Engine:** Real-time panning with mouse-drag (attached to window to prevent freeze on rapid movement), wheel zoom centered at cursor position, touch gesture support, and visible on-screen `[+]`, `[-]`, and `[⛶ Centrar]` (auto-fit bounding box) controls.
+- **Ratsnest Copper Pour Mode:** Visualizes polygon ground and power planes with 38% opacity and solid borders, allowing inspection of copper fills and return paths without obscuring signal tracks.
+- **Quick Layer Isolation & Flip X:** One-click presets for `[Top]`, `[Bottom]` (with realistic horizontal reflection matching a physical PCB back side), `[Ambas]` (combined view), and manual flip toggle.
 - **Smart Companion Auto-Discovery:** Pointing to `circuit.brd` automatically locates and loads `circuit.sch` in the same directory (and vice-versa).
-- **Vector SVG Exporter:** Generates high-resolution, scale-independent vector SVGs of both schematic and board copper layers for documentation, reports, and artifact embedding.
+- **Vector SVG & High-Res PNG Exporter:** Generates high-resolution, scale-independent vector SVGs and crisp 1600x1000 PNG previews for both schematic and board layers for documentation, reports, and artifact embedding.
 - **Clean UNIX Pipeline Compatibility:** Output topology JSON directly to `stdout` (`--json-only`) with graceful broken pipe handling for tools like `jq`, `grep`, and headless CI automation.
+- **Autodesk EAGLE 7.7.0 Automation:** Full compatibility with native EAGLE scripts (`top.scr`, `bottom.scr`, `both.scr`, `all.scr`), keybindings (`Ctrl+T`, `Ctrl+B`, `Ctrl+A`), and headless batch export with `-N-` flag.
 - **Zero Heavy Web Dependencies:** Self-contained, single-file HTML generation without requiring Node.js, npm, Webpack, or external web runtimes.
 - **Skill-Ready Architecture:** Clean separation of concerns allowing seamless use as a standalone command-line tool or as the visual engine for [eagle-cad-skill](https://github.com/fbetancourt-dev/eagle-cad-skill).
 
@@ -91,12 +94,45 @@ eagle-viewer [files ...] [options]
 | `--brd <path>` | `string` | Explicit path to EAGLE board XML file (`.brd`). |
 | `-o, --output <path>` | `string` | Custom path for generated HTML viewer (default: `<name>_viewer.html`). |
 | `--export-svg [dir]` | `string?` | Export schematic and PCB vector SVGs (optional target directory). |
+| `--export-png [dir]` | `string?` | Export schematic and PCB PNG previews via headless Chrome (target directory). |
 | `--no-open` | `flag` | Generate viewer and assets without launching default web browser. |
 | `--json-only` | `flag` | Print parsed circuit topology JSON to stdout and exit. |
 | `--json [file]` | `string?` | Save parsed circuit topology JSON to a file (or stdout if `-`). |
 | `--theme {dark,classic}` | `choice` | Default viewer theme (default: `dark`). |
 | `-v, --version` | `flag` | Show program version. |
 | `-h, --help` | `flag` | Show help and argument summary. |
+
+---
+
+## 🕹️ Navigation Controls
+
+| Action | Control | Description |
+| :--- | :--- | :--- |
+| **Zoom In / Out** | `[+]` / `[−]` Buttons | Smoothly magnify or de-magnify schematic or board canvas. |
+| **Wheel Zoom** | `Mouse Wheel` | Continuous scaling centered precisely at the mouse cursor position. |
+| **Auto-Fit / Center** | `[⛶ Centrar]` Button | Computes the exact bounding box and centers the circuit with optimal scale. |
+| **Pan (Move Canvas)** | `Left-click Drag` | Fluid panning with window-level mouse capture and touch screen support. |
+| **Top Layer Only** | `[Top]` Button | Isolates Layer 1 Top copper, pads, vias, dimension, and top silkscreen. |
+| **Bottom Layer Only** | `[Bottom]` Button | Isolates Layer 16 Bottom copper with physical horizontal mirroring (`Flip X`). |
+| **Both Layers** | `[Ambas]` Button | Combined transparent view of both copper layers for routing inspection. |
+| **Flip Board** | `[Voltear 🔄]` Button | Manually toggle horizontal reflection at any time. |
+
+---
+
+## 🦅 Native Autodesk EAGLE 7.7.0 Automation
+
+The viewer suite integrates seamlessly with local Autodesk EAGLE installations:
+- **Layer Isolation Scripts (`~/Applications/eagle-7.7.0/scr/`):**
+  - `top.scr`: `DISPLAY NONE 1 17 18 19 20 21 23 25 45 51; RATSNEST;`
+  - `bottom.scr`: `DISPLAY NONE 16 17 18 19 20 22 24 26 45 52; RATSNEST;`
+  - `both.scr`: `DISPLAY 1 16 17 18 19 20 21 22 23 24 25 26 45 51 52; RATSNEST;`
+  - `all.scr`: `DISPLAY ALL; RATSNEST;`
+- **Permanent Shortcuts (`eagle.scr`):** `Ctrl+T` (Top), `Ctrl+B` (Bottom), `Ctrl+A` (Both), `Ctrl+Shift+A` (All).
+- **Headless Batch Export with `-N-`:** Always use the `-N-` flag to suppress modal save confirmation prompts:
+  ```bash
+  eagle -N- -C "SCRIPT top.scr; EXPORT IMAGE 'top.png' 300; QUIT;" circuit.brd
+  ```
+- **Desktop DOM Automation (`dogtail`):** Use AT-SPI accessibility tree to catch and handle any unhandled GUI dialogs programmatically.
 
 ---
 
