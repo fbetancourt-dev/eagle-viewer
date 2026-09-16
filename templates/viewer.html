@@ -2300,10 +2300,6 @@
                         attrText.style.strokeLinejoin = 'round';
                         attrText.textContent = val;
                         groupText.appendChild(attrText);
-
-                        var attrOriginLayer = (aLayerNum === 16 || aLayerNum === 22 || aLayerNum === 24 || aLayerNum === 26 || aLayerNum === 28 || aLayerNum === 52) ? 24 : 23;
-                        var attrOriginCross = createOriginCross(attr.x, attr.y, attrOriginLayer, "interactive-part-text", elem.name);
-                        groupOrigins.appendChild(attrOriginCross);
                     });
                 } else if (pkg && pkg.texts && pkg.texts.length > 0) {
                     var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
