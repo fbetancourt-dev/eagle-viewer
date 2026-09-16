@@ -1848,14 +1848,6 @@
             var centerGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
             centerGroup.setAttribute("class", "sonar-center-group");
 
-            var animCenterFade = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-            animCenterFade.setAttribute("attributeName", "opacity");
-            animCenterFade.setAttribute("values", "1; 1; 0");
-            animCenterFade.setAttribute("keyTimes", "0; 0.52; 1");
-            animCenterFade.setAttribute("dur", "2.1s");
-            animCenterFade.setAttribute("fill", "freeze");
-            centerGroup.appendChild(animCenterFade);
-            
             // Retícula / Crosshair sutil tipo mira radar
             var ticks = [
                 { x1: 0, y1: -tickOffset - tickLen, x2: 0, y2: -tickOffset },
@@ -1875,7 +1867,7 @@
                 centerGroup.appendChild(l);
             });
 
-            // Punto central brillante pulsante (pulsa y luego se desvanece con centerGroup)
+            // Punto central brillante pulsante
             var dot = document.createElementNS("http://www.w3.org/2000/svg", "circle");
             dot.setAttribute("cx", 0);
             dot.setAttribute("cy", 0);
@@ -1884,20 +1876,34 @@
             dot.setAttribute("stroke", dotStroke);
             dot.setAttribute("stroke-width", "1.5");
             dot.setAttribute("vector-effect", "non-scaling-stroke");
-            
-            var animDot = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-            animDot.setAttribute("attributeName", "r");
-            animDot.setAttribute("values", `${dotRadius * 0.8}; ${dotRadius * 1.5}; ${dotRadius * 0.8}`);
-            animDot.setAttribute("dur", "0.7s");
-            animDot.setAttribute("repeatCount", "3");
-            dot.appendChild(animDot);
             centerGroup.appendChild(dot);
             beacon.appendChild(centerGroup);
-            
+
+            // Animar centro: pulso suave y fade-out hacia los 2.1s
+            centerGroup.animate([
+                { opacity: 1 },
+                { opacity: 1, offset: 0.5 },
+                { opacity: 0, offset: 1.0 }
+            ], {
+                duration: 2100,
+                easing: 'ease-out',
+                fill: 'forwards'
+            });
+
+            dot.animate([
+                { r: String(dotRadius * 0.8), opacity: 1 },
+                { r: String(dotRadius * 1.5), opacity: 1 },
+                { r: String(dotRadius * 0.8), opacity: 1 }
+            ], {
+                duration: 700,
+                iterations: 3,
+                easing: 'ease-in-out'
+            });
+
             // 4 ondas concéntricas finitas (el centro deja de emitir ondas antes de desaparecer)
             var numRings = 4;
-            var waveDuration = 1.5;
-            var waveStep = 0.28;
+            var waveDuration = 1500;
+            var waveStep = 280;
             var ringColors = isPcb 
                 ? [primaryColor, secondaryColor, primaryColor, secondaryColor] 
                 : [primaryColor, secondaryColor, '#0369a1', secondaryColor];
@@ -1912,42 +1918,22 @@
                 ring.setAttribute("stroke-width", "3");
                 ring.setAttribute("vector-effect", "non-scaling-stroke");
                 ring.setAttribute("opacity", "0");
-                
-                var beginDelay = (i * waveStep).toFixed(2) + "s";
-                
-                var animR = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-                animR.setAttribute("attributeName", "r");
-                animR.setAttribute("from", minRadius);
-                animR.setAttribute("to", maxRadius);
-                animR.setAttribute("dur", waveDuration + "s");
-                animR.setAttribute("begin", beginDelay);
-                animR.setAttribute("repeatCount", "1");
-                animR.setAttribute("fill", "freeze");
-                ring.appendChild(animR);
-                
-                var animO = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-                animO.setAttribute("attributeName", "opacity");
-                animO.setAttribute("values", "0; 1; 0.85; 0.4; 0");
-                animO.setAttribute("keyTimes", "0; 0.05; 0.3; 0.7; 1");
-                animO.setAttribute("dur", waveDuration + "s");
-                animO.setAttribute("begin", beginDelay);
-                animO.setAttribute("repeatCount", "1");
-                animO.setAttribute("fill", "freeze");
-                ring.appendChild(animO);
-
-                var animW = document.createElementNS("http://www.w3.org/2000/svg", "animate");
-                animW.setAttribute("attributeName", "stroke-width");
-                animW.setAttribute("values", "3.5; 2.5; 1.5; 0.5");
-                animW.setAttribute("keyTimes", "0; 0.3; 0.7; 1");
-                animW.setAttribute("dur", waveDuration + "s");
-                animW.setAttribute("begin", beginDelay);
-                animW.setAttribute("repeatCount", "1");
-                animW.setAttribute("fill", "freeze");
-                ring.appendChild(animW);
-
                 beacon.appendChild(ring);
+
+                ring.animate([
+                    { r: String(minRadius), opacity: 0, strokeWidth: '3.5px' },
+                    { r: String(minRadius + (maxRadius - minRadius) * 0.1), opacity: 1, strokeWidth: '3.0px', offset: 0.08 },
+                    { r: String(minRadius + (maxRadius - minRadius) * 0.4), opacity: 0.85, strokeWidth: '2.2px', offset: 0.35 },
+                    { r: String(minRadius + (maxRadius - minRadius) * 0.75), opacity: 0.4, strokeWidth: '1.2px', offset: 0.7 },
+                    { r: String(maxRadius), opacity: 0, strokeWidth: '0.5px', offset: 1.0 }
+                ], {
+                    duration: waveDuration,
+                    delay: i * waveStep,
+                    easing: 'cubic-bezier(0.1, 0.4, 0.2, 1)',
+                    fill: 'forwards'
+                });
             }
-            
+
             container.appendChild(beacon);
             
             clearTimeout(rippleTimers[type]);
