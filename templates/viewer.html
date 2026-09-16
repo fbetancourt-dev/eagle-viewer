@@ -327,16 +327,17 @@
             stroke: var(--pcb-pad-stroke);
             stroke-width: 0.12;
         }
-        .pcb-pad-hole {
-            fill: #000000; /* Agujero de taladro negro */
+        .pcb-pad-hole,
+        .pcb-via-hole,
+        .highlighted circle.pcb-pad-hole,
+        .highlighted circle.pcb-via-hole {
+            fill: #000000 !important;
+            stroke: none !important;
         }
         .pcb-via {
             fill: var(--pcb-via);
             stroke: var(--pcb-via-inner);
             stroke-width: 0.12;
-        }
-        .pcb-via-hole {
-            fill: #000000;
         }
         .pcb-wire-halo {
             stroke: #000000;
@@ -1549,24 +1550,28 @@
             groupDrills.setAttribute("id", "pcbDrillsGroup");
             viewport.appendChild(groupDrills);
 
-            // Vías de señales (Capa 18 y 44)
+            // Vías de señales (Capa 18)
             EAGLE_DATA.board.signals.forEach(sig => {
                 sig.vias.forEach(v => {
+                    var viaGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                    viaGroup.setAttribute("class", "layer-18");
+
                     var viaOuter = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     viaOuter.setAttribute("cx", v.x);
                     viaOuter.setAttribute("cy", -v.y);
                     viaOuter.setAttribute("r", v.diameter / 2);
-                    viaOuter.setAttribute("class", "pcb-via layer-18");
-                    groupVias.appendChild(viaOuter);
-                    USED_LAYERS.add(18);
+                    viaOuter.setAttribute("class", "pcb-via");
+                    viaGroup.appendChild(viaOuter);
 
                     var viaHole = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                     viaHole.setAttribute("cx", v.x);
                     viaHole.setAttribute("cy", -v.y);
                     viaHole.setAttribute("r", v.drill / 2);
-                    viaHole.setAttribute("class", "pcb-via-hole layer-44");
-                    groupDrills.appendChild(viaHole);
-                    USED_LAYERS.add(44);
+                    viaHole.setAttribute("class", "pcb-via-hole");
+                    viaGroup.appendChild(viaHole);
+
+                    groupVias.appendChild(viaGroup);
+                    USED_LAYERS.add(18);
                 });
             });
 
@@ -1689,17 +1694,13 @@
                         });
                     }
 
-                    // Through-Hole Pads (Capa 17) y Taladros (Capa 44)
+                    // Through-Hole Pads (Capa 17)
                     if (pkg.pads && pkg.pads.length > 0) {
                         var gPads = document.createElementNS("http://www.w3.org/2000/svg", "g");
                         gPads.setAttribute("class", "interactive-part layer-17");
                         gPads.setAttribute("data-part", elem.name);
                         gPads.setAttribute("transform", transformStr);
                         groupPads.appendChild(gPads);
-
-                        var gDrills = document.createElementNS("http://www.w3.org/2000/svg", "g");
-                        gDrills.setAttribute("transform", transformStr);
-                        groupDrills.appendChild(gDrills);
 
                         pkg.pads.forEach(p => {
                             var diameter = p.diameter || (p.drill * 1.6);
@@ -1758,9 +1759,8 @@
                             inner.setAttribute("cx", p.x);
                             inner.setAttribute("cy", -p.y);
                             inner.setAttribute("r", p.drill / 2);
-                            inner.setAttribute("class", "pcb-pad-hole layer-44");
-                            gDrills.appendChild(inner);
-                            USED_LAYERS.add(44);
+                            inner.setAttribute("class", "pcb-pad-hole");
+                            gPads.appendChild(inner);
                         });
                     }
 
