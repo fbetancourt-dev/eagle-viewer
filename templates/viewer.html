@@ -785,6 +785,13 @@
                 btnR.classList.add("active");
                 btnR.innerText = "Ratsnest: ON";
             }
+
+            window.addEventListener('keydown', function(e) {
+                if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) return;
+                if (e.key === 'f' || e.key === 'F') {
+                    togglePcbFlip();
+                }
+            });
         };
 
         // Conmutar el cálculo/relleno del Ratsnest
@@ -1881,8 +1888,7 @@
                         if (tMirrored) {
                             text.setAttribute("x", "0");
                             text.setAttribute("y", "0");
-                            text.setAttribute("transform", `translate(${item.x}, ${-item.y}) scale(-1, 1) rotate(${-tAngle + 180})`);
-                            text.setAttribute("text-anchor", "end");
+                            text.setAttribute("transform", `translate(${item.x}, ${-item.y}) scale(-1, 1) rotate(${tAngle})`);
                         } else {
                             text.setAttribute("x", item.x);
                             text.setAttribute("y", -item.y);
@@ -2228,10 +2234,17 @@
 
                         var aRot = getRotationAngle(attr.rot);
                         var aMirrored = isMirrored(attr.rot);
-                        var tf = "";
-                        if (aMirrored) tf += "scale(-1, 1) ";
-                        if (aRot !== 0) tf += `rotate(${-aRot}, ${attr.x}, ${-attr.y}) `;
-                        if (tf) attrText.setAttribute("transform", tf);
+                        if (aMirrored) {
+                            attrText.setAttribute("x", "0");
+                            attrText.setAttribute("y", "0");
+                            attrText.setAttribute("transform", `translate(${attr.x}, ${-attr.y}) scale(-1, 1) rotate(${aRot})`);
+                        } else {
+                            attrText.setAttribute("x", attr.x);
+                            attrText.setAttribute("y", -attr.y);
+                            if (aRot !== 0) {
+                                attrText.setAttribute("transform", `rotate(${-aRot}, ${attr.x}, ${-attr.y})`);
+                            }
+                        }
 
                         if (attr.size) attrText.style.fontSize = `${attr.size}px`;
                         attrText.textContent = val;
@@ -2792,12 +2805,23 @@
             viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
             var btnFlip = document.getElementById("btnPcbFlip");
             if (btnFlip) {
-                if (state.flipped) btnFlip.classList.add("active");
-                else btnFlip.classList.remove("active");
+                if (state.flipped) {
+                    btnFlip.classList.add("active");
+                    btnFlip.innerHTML = 'Volteado 🔄 (Espejo)';
+                } else {
+                    btnFlip.classList.remove("active");
+                    btnFlip.innerHTML = 'Voltear 🔄';
+                }
             }
         }
 
         function togglePcbFlip() {
+            var svg = document.getElementById("pcbSvg");
+            if (svg) {
+                var rect = svg.getBoundingClientRect();
+                var centerX = rect.width / 2;
+                viewStates.pcb.x = 2 * centerX - viewStates.pcb.x;
+            }
             viewStates.pcb.flipped = !viewStates.pcb.flipped;
             updatePcbTransform();
         }
@@ -3026,7 +3050,11 @@
 
             var state = viewStates[type];
             state.scale = scale;
-            state.x = (rect.width / 2) - bounds.cx * scale;
+            if (type === 'pcb' && state.flipped) {
+                state.x = (rect.width / 2) + bounds.cx * scale;
+            } else {
+                state.x = (rect.width / 2) - bounds.cx * scale;
+            }
             state.y = (rect.height / 2) - bounds.cy * scale;
 
             var viewport = document.getElementById(type + 'Viewport');
