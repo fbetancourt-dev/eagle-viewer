@@ -93,6 +93,7 @@
             flex-direction: column;
             border-right: 1px solid var(--border-color);
             position: relative;
+            contain: layout paint;
         }
 
         .panel:last-child {
@@ -145,6 +146,7 @@
             background-color: var(--sch-bg);
             cursor: grab;
             overflow: hidden;
+            contain: strict;
         }
 
         .canvas-container:active {
@@ -159,6 +161,61 @@
             width: 100%;
             height: 100%;
             display: block;
+            contain: strict;
+            isolation: isolate;
+            shape-rendering: geometricPrecision;
+            text-rendering: optimizeSpeed;
+        }
+
+        #schViewport,
+        #pcbViewport {
+            will-change: transform;
+            transform-origin: 0 0;
+        }
+
+        /* Optimización de rendimiento: hit-testing desactivado en geometría decorativa y trazos */
+        .pcb-wire-top,
+        .pcb-wire-bottom,
+        .pcb-wire-halo,
+        .pcb-poly-top,
+        .pcb-poly-bottom,
+        .pcb-silk-wire,
+        .pcb-silk-poly,
+        .pcb-dim-wire,
+        .pcb-via,
+        .pcb-via-hole,
+        .pcb-pad-thru,
+        .pcb-pad-hole,
+        .sch-wire,
+        .sch-bus,
+        .sch-plain-wire,
+        .sch-plain-circle,
+        .sch-plain-rect,
+        .sch-plain-poly,
+        .sch-part-wire,
+        .sch-part-poly,
+        .sch-part-circle,
+        .sch-part-arc,
+        .sch-part-rect,
+        .sch-pin-line,
+        .sch-pin-circle,
+        .sch-pin-label,
+        .sch-origin-cross {
+            pointer-events: none;
+        }
+
+        .interactive-part,
+        .interactive-part-text,
+        .pcb-element {
+            pointer-events: auto;
+        }
+
+        /* 60 FPS puros: desactivar todo el hit-testing durante el arrastre (pan) */
+        body.is-dragging,
+        body.is-dragging * {
+            pointer-events: none !important;
+            user-select: none !important;
+            cursor: grabbing !important;
         }
 
         /* Estilos de elementos SVG */
@@ -806,18 +863,11 @@
         // Dibuja una pequeña cruz (+) en las coordenadas de origen de componentes y textos (estilo Eagle)
         function createOriginCross(x, y, size) {
             size = size || 0.8;
-            var g = document.createElementNS("http://www.w3.org/2000/svg", "g");
-            var hLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            hLine.setAttribute("x1", x - size); hLine.setAttribute("y1", y);
-            hLine.setAttribute("x2", x + size); hLine.setAttribute("y2", y);
-            hLine.setAttribute("class", "sch-origin-cross");
-            var vLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-            vLine.setAttribute("x1", x); vLine.setAttribute("y1", y - size);
-            vLine.setAttribute("x2", x); vLine.setAttribute("y2", y + size);
-            vLine.setAttribute("class", "sch-origin-cross");
-            g.appendChild(hLine);
-            g.appendChild(vLine);
-            return g;
+            var path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+            path.setAttribute("d", `M ${x - size} ${y} h ${size * 2} M ${x} ${y - size} v ${size * 2}`);
+            path.setAttribute("class", "sch-origin-cross");
+            path.setAttribute("fill", "none");
+            return path;
         }
 
         function createSvgFrame(f, defaultClass) {
@@ -2459,35 +2509,47 @@
             var svg = document.getElementById(svgId);
             var viewport = document.getElementById(viewportId);
             var state = viewStates[type];
+            var rafPending = false;
 
-            function updateTransform() {
-                var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
-                viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+            function updateTransform(immediate) {
+                if (immediate) {
+                    var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
+                    viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+                    return;
+                }
+                if (rafPending) return;
+                rafPending = true;
+                requestAnimationFrame(function() {
+                    rafPending = false;
+                    var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
+                    viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+                });
             }
 
             // Pan vía MouseDown
             svg.addEventListener('mousedown', function(e) {
+                if (e.button !== 0 && e.button !== 1) return;
                 state.dragging = true;
                 state.startX = e.clientX - state.x;
                 state.startY = e.clientY - state.y;
                 state.clickOriginX = e.clientX;
                 state.clickOriginY = e.clientY;
-                document.body.style.userSelect = "none";
+                document.body.classList.add("is-dragging");
                 svg.style.cursor = "grabbing";
             });
 
-            // Smooth Window Pan Listeners (no se congela al salir del SVG)
+            // Smooth Window Pan Listeners con requestAnimationFrame
             window.addEventListener('mousemove', function(e) {
                 if (!state.dragging) return;
                 state.x = e.clientX - state.startX;
                 state.y = e.clientY - state.startY;
                 updateTransform();
-            });
+            }, { passive: true });
 
             window.addEventListener('mouseup', function(e) {
                 if (!state.dragging) return;
                 state.dragging = false;
-                document.body.style.userSelect = "";
+                document.body.classList.remove("is-dragging");
                 svg.style.cursor = "grab";
 
                 var dx = e.clientX - state.clickOriginX;
@@ -2501,6 +2563,7 @@
                     state.dragging = true;
                     state.startX = e.touches[0].clientX - state.x;
                     state.startY = e.touches[0].clientY - state.y;
+                    document.body.classList.add("is-dragging");
                 }
             }, { passive: true });
 
@@ -2514,6 +2577,7 @@
 
             window.addEventListener('touchend', function() {
                 state.dragging = false;
+                document.body.classList.remove("is-dragging");
             });
 
             // Selección y Deselección delegada en SVG
@@ -2544,7 +2608,7 @@
                 }
             });
 
-            // Zoom suave con Rueda y Trackpad
+            // Zoom ultra-fluido con Rueda y Trackpad mediante rAF
             svg.addEventListener('wheel', function(e) {
                 e.preventDefault();
                 var zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
@@ -2563,7 +2627,7 @@
                 updateTransform();
             }, { passive: false });
 
-            updateTransform();
+            updateTransform(true);
         }
 
         function clearSelection() {
