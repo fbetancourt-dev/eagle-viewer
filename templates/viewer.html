@@ -282,16 +282,20 @@
             opacity: 0.8;
         }
         
-        /* ESTADO CON RATSNEST (Activado dinámicamente): Relleno translúcido de cobre GND */
+        /* ESTADO CON RATSNEST (Activado dinámicamente): Relleno de cobre sólido/translúcido (Copper pour) */
         .ratsnest-active .pcb-poly-top {
             fill: var(--pcb-top);
-            fill-opacity: 0.15;
-            stroke: none;
+            fill-opacity: 0.38;
+            stroke: var(--pcb-top);
+            stroke-width: 0.2;
+            stroke-dasharray: none;
         }
         .ratsnest-active .pcb-poly-bottom {
             fill: var(--pcb-bottom);
-            fill-opacity: 0.15;
-            stroke: none;
+            fill-opacity: 0.38;
+            stroke: var(--pcb-bottom);
+            stroke-width: 0.2;
+            stroke-dasharray: none;
         }
         
         .pcb-pad-smd-top {
@@ -482,7 +486,11 @@
                 <div class="panel-controls">
                     <button class="btn" onclick="prevSheet()" title="Hoja anterior">◀</button>
                     <button class="btn" onclick="nextSheet()" title="Hoja siguiente">▶</button>
-                    <button class="btn" onclick="resetZoom('sch')">Centrar</button>
+                    <div style="display: inline-flex; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin: 0 4px;">
+                        <button class="btn" onclick="zoomBy('sch', 1.25)" title="Acercar (+)">+</button>
+                        <button class="btn" onclick="zoomBy('sch', 0.8)" title="Alejar (−)">−</button>
+                    </div>
+                    <button class="btn" onclick="resetZoom('sch')" title="Ajustar a pantalla y Centrar">⛶ Centrar</button>
                 </div>
             </div>
             <div class="canvas-container" id="schContainer" style="background-color: var(--sch-bg);">
@@ -508,7 +516,11 @@
                     </div>
                     <button class="btn" id="btnPcbFlip" onclick="togglePcbFlip()" title="Voltear placa horizontalmente (espejo físico)">Voltear 🔄</button>
                     <button class="btn" id="btnRatsnest" onclick="toggleRatsnest()">Ratsnest: OFF</button>
-                    <button class="btn" onclick="resetZoom('pcb')">Centrar</button>
+                    <div style="display: inline-flex; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin: 0 4px;">
+                        <button class="btn" onclick="zoomBy('pcb', 1.25)" title="Acercar (+)">+</button>
+                        <button class="btn" onclick="zoomBy('pcb', 0.8)" title="Alejar (−)">−</button>
+                    </div>
+                    <button class="btn" onclick="resetZoom('pcb')" title="Ajustar a pantalla y Centrar">⛶ Centrar</button>
                 </div>
             </div>
             <div class="canvas-container" id="pcbContainer">
@@ -540,7 +552,7 @@
 
         var currentSheetIndex = 0;
         var USED_LAYERS = new Set();
-        var ratsnestActive = false; // Por defecto inicia sin aplicar Ratsnest (como Eagle)
+        var ratsnestActive = true; // Por defecto inicia con Ratsnest (Copper pour) activo
 
         function getActiveSheet() {
             if (EAGLE_DATA && EAGLE_DATA.schematic && EAGLE_DATA.schematic.sheets && EAGLE_DATA.schematic.sheets.length > 0) {
@@ -617,6 +629,13 @@
             resetZoom('pcb');
 
             buildLayersMenu();
+            var pcbVp = document.getElementById("pcbViewport");
+            var btnR = document.getElementById("btnRatsnest");
+            if (pcbVp) pcbVp.classList.add("ratsnest-active");
+            if (btnR) {
+                btnR.classList.add("active");
+                btnR.innerText = "Ratsnest: ON";
+            }
         };
 
         // Conmutar el cálculo/relleno del Ratsnest
@@ -1685,6 +1704,86 @@
         }
 
 
+
+        function getPcbBounds() {
+            var minX = 99999, maxX = -99999, minY = 99999, maxY = -99999;
+            if (EAGLE_DATA.board && EAGLE_DATA.board.dimension && EAGLE_DATA.board.dimension.length > 0) {
+                EAGLE_DATA.board.dimension.forEach(function(d) {
+                    minX = Math.min(minX, d.x1, d.x2);
+                    maxX = Math.max(maxX, d.x1, d.x2);
+                    minY = Math.min(minY, -d.y1, -d.y2);
+                    maxY = Math.max(maxY, -d.y1, -d.y2);
+                });
+            } else if (EAGLE_DATA.board && EAGLE_DATA.board.elements && EAGLE_DATA.board.elements.length > 0) {
+                EAGLE_DATA.board.elements.forEach(function(e) {
+                    minX = Math.min(minX, e.x);
+                    maxX = Math.max(maxX, e.x);
+                    minY = Math.min(minY, -e.y);
+                    maxY = Math.max(maxY, -e.y);
+                });
+            } else {
+                return { minX: 0, maxX: 100, minY: -100, maxY: 0, width: 100, height: 100, cx: 50, cy: -50 };
+            }
+            return {
+                minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+                width: Math.max(1, maxX - minX), height: Math.max(1, maxY - minY),
+                cx: (minX + maxX) / 2, cy: (minY + maxY) / 2
+            };
+        }
+
+        function getSchBounds() {
+            var minX = 99999, maxX = -99999, minY = 99999, maxY = -99999;
+            var sheet = getActiveSheet();
+            var instances = (sheet && sheet.instances) ? sheet.instances : ((EAGLE_DATA.schematic && EAGLE_DATA.schematic.instances) ? EAGLE_DATA.schematic.instances : []);
+            var nets = (sheet && sheet.nets) ? sheet.nets : ((EAGLE_DATA.schematic && EAGLE_DATA.schematic.nets) ? EAGLE_DATA.schematic.nets : []);
+
+            instances.forEach(function(inst) {
+                minX = Math.min(minX, inst.x);
+                maxX = Math.max(maxX, inst.x);
+                minY = Math.min(minY, -inst.y);
+                maxY = Math.max(maxY, -inst.y);
+            });
+
+            nets.forEach(function(net) {
+                (net.wires || []).forEach(function(w) {
+                    minX = Math.min(minX, w.x1, w.x2);
+                    maxX = Math.max(maxX, w.x1, w.x2);
+                    minY = Math.min(minY, -w.y1, -w.y2);
+                    maxY = Math.max(maxY, -w.y1, -w.y2);
+                });
+            });
+
+            if (minX > maxX) {
+                return { minX: 0, maxX: 200, minY: -150, maxY: 0, width: 200, height: 150, cx: 100, cy: -75 };
+            }
+
+            return {
+                minX: minX, maxX: maxX, minY: minY, maxY: maxY,
+                width: Math.max(1, maxX - minX), height: Math.max(1, maxY - minY),
+                cx: (minX + maxX) / 2, cy: (minY + maxY) / 2
+            };
+        }
+
+        function zoomBy(type, factor) {
+            var svg = document.getElementById(type + 'Svg');
+            if (!svg) return;
+            var rect = svg.getBoundingClientRect();
+            var centerX = rect.width / 2;
+            var centerY = rect.height / 2;
+
+            var state = viewStates[type];
+            var oldScale = state.scale;
+            var newScale = Math.max(0.05, Math.min(state.scale * factor, 80));
+
+            state.scale = newScale;
+            state.x = centerX - (centerX - state.x) * (newScale / oldScale);
+            state.y = centerY - (centerY - state.y) * (newScale / oldScale);
+
+            var viewport = document.getElementById(type + 'Viewport');
+            var scaleX = (type === 'pcb' && state.flipped) ? -state.scale : state.scale;
+            viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+        }
+
         function updatePcbTransform() {
             var state = viewStates.pcb;
             var viewport = document.getElementById('pcbViewport');
@@ -1754,66 +1853,87 @@
                 viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
             }
 
+            // Pan vía MouseDown
             svg.addEventListener('mousedown', function(e) {
                 state.dragging = true;
                 state.startX = e.clientX - state.x;
                 state.startY = e.clientY - state.y;
                 state.clickOriginX = e.clientX;
                 state.clickOriginY = e.clientY;
+                document.body.style.userSelect = "none";
+                svg.style.cursor = "grabbing";
             });
 
-            window.addEventListener('mouseup', function(e) {
-                if (!state.dragging) return;
-                state.dragging = false;
-                
-                // Calcular distancia arrastrada
-                var dx = e.clientX - state.clickOriginX;
-                var dy = e.clientY - state.clickOriginY;
-                state.wasDrag = Math.sqrt(dx * dx + dy * dy) > 4;
-            });
-
-            // Clic en área vacía → deseleccionar
-            svg.addEventListener('click', function(e) {
-                // Si el mouse se movió más de 4px, fue un pan → ignorar
-                if (state.wasDrag) {
-                    state.wasDrag = false;
-                    return;
-                }
-
-                // Usar closest() para detectar si el clic fue sobre un componente
-                var hitPart = e.target.closest('.interactive-part, .interactive-part-text, .pcb-element');
-                if (!hitPart) {
-                    clearSelection();
-                }
-            });
-
-            svg.addEventListener('mousemove', function(e) {
+            // Smooth Window Pan Listeners (no se congela al salir del SVG)
+            window.addEventListener('mousemove', function(e) {
                 if (!state.dragging) return;
                 state.x = e.clientX - state.startX;
                 state.y = e.clientY - state.startY;
                 updateTransform();
             });
 
+            window.addEventListener('mouseup', function(e) {
+                if (!state.dragging) return;
+                state.dragging = false;
+                document.body.style.userSelect = "";
+                svg.style.cursor = "grab";
+
+                var dx = e.clientX - state.clickOriginX;
+                var dy = e.clientY - state.clickOriginY;
+                state.wasDrag = Math.sqrt(dx * dx + dy * dy) > 4;
+            });
+
+            // Touch support para laptops táctiles y touchpads
+            svg.addEventListener('touchstart', function(e) {
+                if (e.touches.length === 1) {
+                    state.dragging = true;
+                    state.startX = e.touches[0].clientX - state.x;
+                    state.startY = e.touches[0].clientY - state.y;
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchmove', function(e) {
+                if (state.dragging && e.touches.length === 1) {
+                    state.x = e.touches[0].clientX - state.startX;
+                    state.y = e.touches[0].clientY - state.startY;
+                    updateTransform();
+                }
+            }, { passive: true });
+
+            window.addEventListener('touchend', function() {
+                state.dragging = false;
+            });
+
+            // Deseleccionar al hacer clic en área vacía
+            svg.addEventListener('click', function(e) {
+                if (state.wasDrag) {
+                    state.wasDrag = false;
+                    return;
+                }
+                var hitPart = e.target.closest('.interactive-part, .interactive-part-text, .pcb-element');
+                if (!hitPart) {
+                    clearSelection();
+                }
+            });
+
+            // Zoom suave con Rueda y Trackpad
             svg.addEventListener('wheel', function(e) {
                 e.preventDefault();
-                var zoomFactor = 1.1;
-                
+                var zoomFactor = e.deltaY < 0 ? 1.15 : 0.87;
+
                 var rect = svg.getBoundingClientRect();
                 var mouseX = e.clientX - rect.left;
                 var mouseY = e.clientY - rect.top;
-                
+
                 var oldScale = state.scale;
-                if (e.deltaY < 0) {
-                    state.scale *= zoomFactor;
-                } else {
-                    state.scale /= zoomFactor;
-                }
-                
-                state.x = mouseX - (mouseX - state.x) * (state.scale / oldScale);
-                state.y = mouseY - (mouseY - state.y) * (state.scale / oldScale);
-                
+                var newScale = Math.max(0.05, Math.min(state.scale * zoomFactor, 80));
+
+                state.scale = newScale;
+                state.x = mouseX - (mouseX - state.x) * (newScale / oldScale);
+                state.y = mouseY - (mouseY - state.y) * (newScale / oldScale);
+
                 updateTransform();
-            });
+            }, { passive: false });
 
             updateTransform();
         }
@@ -1827,14 +1947,23 @@
 
 
         function resetZoom(type) {
-            var state = viewStates[type];
             var svg = document.getElementById(type + 'Svg');
+            if (!svg) return;
             var rect = svg.getBoundingClientRect();
-            
-            state.x = rect.width / 2;
-            state.y = rect.height / 2;
-            state.scale = type === 'sch' ? 1.2 : 4.5;
-            
+            if (rect.width === 0 || rect.height === 0) return;
+
+            var bounds = (type === 'pcb') ? getPcbBounds() : getSchBounds();
+            var availW = rect.width * 0.85;
+            var availH = rect.height * 0.85;
+
+            var scale = Math.min(availW / bounds.width, availH / bounds.height);
+            scale = Math.max(0.1, Math.min(scale, 60));
+
+            var state = viewStates[type];
+            state.scale = scale;
+            state.x = (rect.width / 2) - bounds.cx * scale;
+            state.y = (rect.height / 2) - bounds.cy * scale;
+
             var viewport = document.getElementById(type + 'Viewport');
             var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
             viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");

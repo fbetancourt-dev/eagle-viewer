@@ -71,7 +71,7 @@ class EagleToSvg:
 
         # Estilos CSS embebidos
         style = ET.SubElement(svg_root, "style")
-        style.text = """
+        style_text = """
             .wire { stroke: #008000; stroke-width: 0.4; fill: none; stroke-linecap: round; }
             .junction { fill: #008000; }
             .part-wire { stroke: #800000; stroke-width: 0.3; fill: none; stroke-linecap: round; }
@@ -429,7 +429,7 @@ class EagleToSvg:
         tree = ET.ElementTree(svg_root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
-    def export_board(self, output_path, side="both", mirror_bottom=True):
+    def export_board(self, output_path, side="both", mirror_bottom=True, ratsnest=True):
         dimension = self.data["board"]["dimension"]
         elements = self.data["board"]["elements"]
         signals = self.data["board"]["signals"]
@@ -471,7 +471,7 @@ class EagleToSvg:
         })
 
         style = ET.SubElement(svg_root, "style")
-        style.text = """
+        style_text = """
             .dim { stroke: #f8fafc; stroke-width: 0.3; fill: none; opacity: 0.3; }
             .track-top { stroke: #ef4444; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.9; }
             .track-bottom { stroke: #3b82f6; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.9; }
@@ -479,14 +479,26 @@ class EagleToSvg:
             .via-hole { fill: #09090b; }
             .silk { stroke: #f8fafc; stroke-width: 0.15; fill: none; opacity: 0.6; stroke-linecap: round; }
             .silk-poly { fill: #f8fafc; opacity: 0.4; }
-            .poly-top { fill: none; stroke: #ef4444; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
-            .poly-bottom { fill: none; stroke: #3b82f6; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
+            /* Copper pour styles (Ratsnest mode) */
+            __POLY_STYLES__
             .smd-top { fill: #ef4444; stroke: #eab308; stroke-width: 0.1; }
             .smd-bottom { fill: #3b82f6; stroke: #eab308; stroke-width: 0.1; }
             .pad { fill: #eab308; stroke: #d97706; stroke-width: 0.15; }
             .pad-hole { fill: #09090b; }
             .silk-text { fill: #f8fafc; font-family: sans-serif; font-size: 0.8px; text-anchor: middle; }
         """
+        if ratsnest:
+            poly_styles = """
+            .poly-top { fill: #ef4444; fill-opacity: 0.38; stroke: #ef4444; stroke-width: 0.2; }
+            .poly-bottom { fill: #3b82f6; fill-opacity: 0.38; stroke: #3b82f6; stroke-width: 0.2; }
+            """
+        else:
+            poly_styles = """
+            .poly-top { fill: none; stroke: #ef4444; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
+            .poly-bottom { fill: none; stroke: #3b82f6; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
+            """
+        style_text = style_text.replace("__POLY_STYLES__", poly_styles)
+        style.text = style_text
 
         # 1. Calcular el bounding box de la placa basándose en la capa 20 Dimension
         min_dim_x, max_dim_x, min_dim_y, max_dim_y = 9999, -9999, 9999, -9999
@@ -847,13 +859,13 @@ class EagleToSvg:
         tree = ET.ElementTree(svg_root)
         tree.write(output_path, encoding="utf-8", xml_declaration=True)
 
-    def export_board_top(self, output_path):
-        """Exports clean isolated top side of the PCB."""
-        return self.export_board(output_path, side="top", mirror_bottom=False)
+    def export_board_top(self, output_path, ratsnest=True):
+        """Exports clean isolated top side of the PCB with copper flood pour."""
+        return self.export_board(output_path, side="top", mirror_bottom=False, ratsnest=ratsnest)
 
-    def export_board_bottom(self, output_path, mirror=True):
-        """Exports clean isolated bottom side of the PCB, mirrored horizontally to match physical underside."""
-        return self.export_board(output_path, side="bottom", mirror_bottom=mirror)
+    def export_board_bottom(self, output_path, mirror=True, ratsnest=True):
+        """Exports clean isolated bottom side of the PCB, mirrored horizontally with copper flood pour."""
+        return self.export_board(output_path, side="bottom", mirror_bottom=mirror, ratsnest=ratsnest)
 
     def _calculate_arc_path(self, x1, y1, x2, y2, curve):
         arc_angle = curve * math.pi / 180.0
