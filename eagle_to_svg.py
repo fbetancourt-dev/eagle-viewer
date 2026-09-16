@@ -467,35 +467,36 @@ class EagleToSvg:
             "viewBox": f"{min_x} {min_y} {width} {height}",
             "width": "100%",
             "height": "100%",
-            "style": "background-color: #09090b;"
+            "style": "background-color: #000000;"
         })
 
         style = ET.SubElement(svg_root, "style")
         style_text = """
-            .dim { stroke: #f8fafc; stroke-width: 0.3; fill: none; opacity: 0.3; }
-            .track-top { stroke: #ef4444; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.9; }
-            .track-bottom { stroke: #3b82f6; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 0.9; }
-            .via { fill: #eab308; stroke: #b45309; stroke-width: 0.1; }
-            .via-hole { fill: #09090b; }
-            .silk { stroke: #f8fafc; stroke-width: 0.15; fill: none; opacity: 0.6; stroke-linecap: round; }
-            .silk-poly { fill: #f8fafc; opacity: 0.4; }
+            .dim { stroke: #ffffff; stroke-width: 0.25; fill: none; opacity: 1.0; }
+            .track-top { stroke: #cc0000; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 1.0; }
+            .track-bottom { stroke: #0000cc; stroke-linecap: round; stroke-linejoin: round; fill: none; opacity: 1.0; }
+            .track-halo { stroke: #000000; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+            .via { fill: #ffff00; stroke: #00cc44; stroke-width: 0.12; }
+            .via-hole { fill: #000000; }
+            .silk { stroke: #ffffff; stroke-width: 0.15; fill: none; opacity: 1.0; stroke-linecap: round; }
+            .silk-poly { fill: #ffffff; opacity: 0.8; }
             /* Copper pour styles (Ratsnest mode) */
             __POLY_STYLES__
-            .smd-top { fill: #ef4444; stroke: #eab308; stroke-width: 0.1; }
-            .smd-bottom { fill: #3b82f6; stroke: #eab308; stroke-width: 0.1; }
-            .pad { fill: #eab308; stroke: #d97706; stroke-width: 0.15; }
-            .pad-hole { fill: #09090b; }
-            .silk-text { fill: #f8fafc; font-family: sans-serif; font-size: 0.8px; text-anchor: middle; }
+            .smd-top { fill: #cc0000; stroke: #ffff00; stroke-width: 0.1; }
+            .smd-bottom { fill: #0000cc; stroke: #ffff00; stroke-width: 0.1; }
+            .pad { fill: #00cc44; stroke: #ffff00; stroke-width: 0.12; }
+            .pad-hole { fill: #000000; }
+            .silk-text { fill: #ffffff; font-family: 'Courier New', 'Consolas', monospace; font-size: 0.8px; font-weight: bold; text-anchor: middle; }
         """
         if ratsnest:
             poly_styles = """
-            .poly-top { fill: #ef4444; fill-opacity: 0.38; stroke: #ef4444; stroke-width: 0.2; }
-            .poly-bottom { fill: #3b82f6; fill-opacity: 0.38; stroke: #3b82f6; stroke-width: 0.2; }
+            .poly-top { fill: #cc0000; fill-opacity: 0.75; stroke: #cc0000; stroke-width: 0.2; }
+            .poly-bottom { fill: #0000cc; fill-opacity: 0.75; stroke: #0000cc; stroke-width: 0.2; }
             """
         else:
             poly_styles = """
-            .poly-top { fill: none; stroke: #ef4444; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
-            .poly-bottom { fill: none; stroke: #3b82f6; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
+            .poly-top { fill: none; stroke: #cc0000; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
+            .poly-bottom { fill: none; stroke: #0000cc; stroke-width: 0.25; stroke-dasharray: 0.6 0.6; opacity: 0.8; }
             """
         style_text = style_text.replace("__POLY_STYLES__", poly_styles)
         style.text = style_text
@@ -525,9 +526,9 @@ class EagleToSvg:
                 "height": str(max_dim_y - min_dim_y),
                 "rx": "1.2",
                 "ry": "1.2",
-                "fill": "#111827",
-                "stroke": "#374151",
-                "stroke-width": "0.3"
+                "fill": "#000000",
+                "stroke": "#ffffff",
+                "stroke-width": "0.25"
             })
 
         # 3. Dibujar Dimensiones de la serigrafía exterior
@@ -547,42 +548,61 @@ class EagleToSvg:
                     "class": "dim"
                 })
 
-        # 4. Polígonos de cobre Bottom
+        # 4. Capa Bottom (Cobre Azul) - Con grupo de mezcla aditiva
         if side in ("both", "bottom"):
+            g_bottom_attrs = {"id": "layer-16-bottom"}
+            if side == "both":
+                g_bottom_attrs["style"] = "mix-blend-mode: screen;"
+            g_bottom = ET.SubElement(container, "g", g_bottom_attrs)
+
+            # Polígonos Bottom
+            has_bottom_poly = False
             for sig in signals:
                 if sig.get("polygons"):
                     for poly in sig["polygons"]:
                         if poly["layer"] == 16:
-                            ET.SubElement(container, "polygon", {
+                            has_bottom_poly = True
+                            ET.SubElement(g_bottom, "polygon", {
                                 "points": " ".join([f"{v['x']},{-v['y']}" for v in poly["vertices"]]),
                                 "class": "poly-bottom"
                             })
 
-        # 5. Polígonos de cobre Top
-        if side in ("both", "top"):
-            for sig in signals:
-                if sig.get("polygons"):
-                    for poly in sig["polygons"]:
-                        if poly["layer"] == 1:
-                            ET.SubElement(container, "polygon", {
-                                "points": " ".join([f"{v['x']},{-v['y']}" for v in poly["vertices"]]),
-                                "class": "poly-top"
-                            })
+            # Halos de aislamiento en negro para pistas que cruzan polígonos
+            if has_bottom_poly and ratsnest:
+                for sig in signals:
+                    for w in sig["wires"]:
+                        if w["layer"] == 16:
+                            halo_w = float(w["width"]) + 0.6
+                            if w.get("curve"):
+                                path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
+                                ET.SubElement(g_bottom, "path", {
+                                    "d": path_str,
+                                    "class": "track-halo",
+                                    "style": f"stroke-width: {halo_w};"
+                                })
+                            else:
+                                ET.SubElement(g_bottom, "line", {
+                                    "x1": str(w["x1"]),
+                                    "y1": str(-w["y1"]),
+                                    "x2": str(w["x2"]),
+                                    "y2": str(-w["y2"]),
+                                    "class": "track-halo",
+                                    "style": f"stroke-width: {halo_w};"
+                                })
 
-        # 6. Pistas Bottom
-        if side in ("both", "bottom"):
+            # Pistas Bottom
             for sig in signals:
                 for w in sig["wires"]:
                     if w["layer"] == 16:
                         if w.get("curve"):
                             path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
-                            ET.SubElement(container, "path", {
+                            ET.SubElement(g_bottom, "path", {
                                 "d": path_str,
                                 "class": "track-bottom",
                                 "style": f"stroke-width: {w['width']};"
                             })
                         else:
-                            ET.SubElement(container, "line", {
+                            ET.SubElement(g_bottom, "line", {
                                 "x1": str(w["x1"]),
                                 "y1": str(-w["y1"]),
                                 "x2": str(w["x2"]),
@@ -591,20 +611,61 @@ class EagleToSvg:
                                 "style": f"stroke-width: {w['width']};"
                             })
 
-        # 7. Pistas Top
+        # 5. Capa Top (Cobre Rojo) - Con grupo de mezcla aditiva
         if side in ("both", "top"):
+            g_top_attrs = {"id": "layer-1-top"}
+            if side == "both":
+                g_top_attrs["style"] = "mix-blend-mode: screen;"
+            g_top = ET.SubElement(container, "g", g_top_attrs)
+
+            # Polígonos Top
+            has_top_poly = False
+            for sig in signals:
+                if sig.get("polygons"):
+                    for poly in sig["polygons"]:
+                        if poly["layer"] == 1:
+                            has_top_poly = True
+                            ET.SubElement(g_top, "polygon", {
+                                "points": " ".join([f"{v['x']},{-v['y']}" for v in poly["vertices"]]),
+                                "class": "poly-top"
+                            })
+
+            # Halos de aislamiento en negro para pistas que cruzan polígonos
+            if has_top_poly and ratsnest:
+                for sig in signals:
+                    for w in sig["wires"]:
+                        if w["layer"] == 1:
+                            halo_w = float(w["width"]) + 0.6
+                            if w.get("curve"):
+                                path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
+                                ET.SubElement(g_top, "path", {
+                                    "d": path_str,
+                                    "class": "track-halo",
+                                    "style": f"stroke-width: {halo_w};"
+                                })
+                            else:
+                                ET.SubElement(g_top, "line", {
+                                    "x1": str(w["x1"]),
+                                    "y1": str(-w["y1"]),
+                                    "x2": str(w["x2"]),
+                                    "y2": str(-w["y2"]),
+                                    "class": "track-halo",
+                                    "style": f"stroke-width: {halo_w};"
+                                })
+
+            # Pistas Top
             for sig in signals:
                 for w in sig["wires"]:
                     if w["layer"] == 1:
                         if w.get("curve"):
                             path_str = self._calculate_arc_path(w["x1"], -w["y1"], w["x2"], -w["y2"], w["curve"])
-                            ET.SubElement(container, "path", {
+                            ET.SubElement(g_top, "path", {
                                 "d": path_str,
                                 "class": "track-top",
                                 "style": f"stroke-width: {w['width']};"
                             })
                         else:
-                            ET.SubElement(container, "line", {
+                            ET.SubElement(g_top, "line", {
                                 "x1": str(w["x1"]),
                                 "y1": str(-w["y1"]),
                                 "x2": str(w["x2"]),
@@ -781,6 +842,27 @@ class EagleToSvg:
                             "points": pts,
                             "class": "pad"
                         })
+                    elif p["shape"] == "long":
+                        pad_rot = 0
+                        if p.get("rot"):
+                            m = re.search(r"R(\d+)", p["rot"])
+                            if m:
+                                pad_rot = int(m.group(1))
+                        pad_len = diameter * 2.0
+                        pad_w = diameter
+                        r_c = diameter / 2.0
+                        rect_attribs = {
+                            "x": str(p["x"] - pad_len / 2.0),
+                            "y": str(-p["y"] - pad_w / 2.0),
+                            "width": str(pad_len),
+                            "height": str(pad_w),
+                            "rx": str(r_c),
+                            "ry": str(r_c),
+                            "class": "pad"
+                        }
+                        if pad_rot != 0:
+                            rect_attribs["transform"] = f"rotate({-pad_rot}, {p['x']}, {-p['y']})"
+                        ET.SubElement(pad_g, "rect", rect_attribs)
                     else:
                         ET.SubElement(pad_g, "circle", {
                             "cx": str(p["x"]),

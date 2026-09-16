@@ -24,13 +24,16 @@
             --sch-text: #000000; /* Texto/Valores */
             --sch-part-label: #800000;
             
-            /* Colores PCB */
-            --pcb-bg: #09090b; /* Fondo fuera de la placa */
-            --pcb-top: #ef4444; /* Capa 1 Top - Rojo */
-            --pcb-bottom: #3b82f6; /* Capa 16 Bottom - Azul */
-            --pcb-pad: #eab308; /* Oro / Latón */
-            --pcb-silk: #f8fafc; /* Blanco Serigrafía */
-            --pcb-dim: #10b981; /* Dimensión */
+            /* Colores PCB Oficiales de Autodesk EAGLE */
+            --pcb-bg: #000000; /* Fondo negro puro EAGLE */
+            --pcb-top: #cc0000; /* Capa 1 Top - Rojo EAGLE */
+            --pcb-bottom: #0000cc; /* Capa 16 Bottom - Azul EAGLE */
+            --pcb-pad: #00cc44; /* Capa 17 Pads - Verde brillante EAGLE */
+            --pcb-pad-stroke: #ffff00; /* Borde amarillo brillante Pads EAGLE */
+            --pcb-via: #ffff00; /* Capa 18 Vías - Anillo amarillo EAGLE */
+            --pcb-via-inner: #00cc44; /* Núcleo verde Vías EAGLE */
+            --pcb-silk: #ffffff; /* Capas 21/25 - Blanco puro EAGLE */
+            --pcb-dim: #ffffff; /* Capa 20 Dimensión - Blanco puro EAGLE */
         }
 
         * {
@@ -292,41 +295,59 @@
         }
         .ratsnest-active .pcb-poly-bottom {
             fill: var(--pcb-bottom);
-            fill-opacity: 0.38;
+            fill-opacity: 0.75;
             stroke: var(--pcb-bottom);
             stroke-width: 0.2;
             stroke-dasharray: none;
         }
+        .ratsnest-active .pcb-poly-top {
+            fill: var(--pcb-top);
+            fill-opacity: 0.75;
+            stroke: var(--pcb-top);
+            stroke-width: 0.2;
+            stroke-dasharray: none;
+        }
         
+        .pcb-blend-group {
+            mix-blend-mode: screen;
+        }
+
         .pcb-pad-smd-top {
             fill: var(--pcb-top);
-            stroke: var(--pcb-pad);
+            stroke: #ffff00;
             stroke-width: 0.1;
         }
         .pcb-pad-smd-bottom {
             fill: var(--pcb-bottom);
-            stroke: var(--pcb-pad);
+            stroke: #ffff00;
             stroke-width: 0.1;
         }
         .pcb-pad-thru {
             fill: var(--pcb-pad);
-            stroke: #d97706;
-            stroke-width: 0.15;
+            stroke: var(--pcb-pad-stroke);
+            stroke-width: 0.12;
         }
         .pcb-pad-hole {
-            fill: #09090b; /* Coincide con el fondo de la pantalla para simular taladro vacío */
+            fill: #000000; /* Agujero de taladro negro */
         }
         .pcb-via {
-            fill: var(--pcb-pad);
-            stroke: #b45309;
-            stroke-width: 0.1;
+            fill: var(--pcb-via);
+            stroke: var(--pcb-via-inner);
+            stroke-width: 0.12;
         }
         .pcb-via-hole {
-            fill: #111827; /* Coincide con el FR4 de fondo */
+            fill: #000000;
+        }
+        .pcb-wire-halo {
+            stroke: #000000;
+            fill: none;
+            stroke-linecap: round;
+            stroke-linejoin: round;
         }
         .pcb-silk-text {
             fill: var(--pcb-silk);
-            font-family: 'JetBrains Mono', monospace;
+            font-family: 'Courier New', 'Consolas', monospace;
+            font-weight: bold;
             font-size: 0.8px;
         }
 
@@ -1253,9 +1274,9 @@
                 substrate.setAttribute("height", maxY - minY);
                 substrate.setAttribute("rx", 1.2);
                 substrate.setAttribute("ry", 1.2);
-                substrate.setAttribute("fill", "#111827");
-                substrate.setAttribute("stroke", "#374151");
-                substrate.setAttribute("stroke-width", 0.3);
+                substrate.setAttribute("fill", "#000000");
+                substrate.setAttribute("stroke", "#ffffff");
+                substrate.setAttribute("stroke-width", 0.25);
                 substrate.setAttribute("class", "layer-20");
                 viewport.appendChild(substrate);
                 USED_LAYERS.add(20);
@@ -1267,49 +1288,75 @@
                 USED_LAYERS.add(20);
             });
 
+            // Grupo de cobre Bottom (Capa 16 Azul) con mezcla aditiva
+            var groupBottom = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupBottom.setAttribute("id", "pcbBottomCopperGroup");
+            groupBottom.setAttribute("class", "pcb-blend-group");
+            viewport.appendChild(groupBottom);
+
             // Capa 16 Bottom Polygons (azul)
+            var hasBottomPoly = false;
             EAGLE_DATA.board.signals.forEach(sig => {
                 if (sig.polygons) {
                     sig.polygons.forEach(poly => {
                         if (poly.layer === 16) {
+                            hasBottomPoly = true;
                             var el = createSvgPolygon(poly, "pcb-poly-bottom layer-16");
-                            viewport.appendChild(el);
+                            groupBottom.appendChild(el);
                             USED_LAYERS.add(16);
                         }
                     });
                 }
             });
 
+            // Capa 16 Bottom Tracks (azul con halo de aislamiento)
+            EAGLE_DATA.board.signals.forEach(sig => {
+                sig.wires.forEach(w => {
+                    if (w.layer === 16) {
+                        if (hasBottomPoly) {
+                            var halo = createSvgWire(w, "pcb-wire-halo layer-16");
+                            halo.style.strokeWidth = (parseFloat(w.width) + 0.6) + "px";
+                            groupBottom.appendChild(halo);
+                        }
+                        var el = createSvgWire(w, "pcb-wire-bottom layer-16");
+                        groupBottom.appendChild(el);
+                        USED_LAYERS.add(16);
+                    }
+                });
+            });
+
+            // Grupo de cobre Top (Capa 1 Rojo) con mezcla aditiva
+            var groupTop = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupTop.setAttribute("id", "pcbTopCopperGroup");
+            groupTop.setAttribute("class", "pcb-blend-group");
+            viewport.appendChild(groupTop);
+
             // Capa 1 Top Polygons (rojo)
+            var hasTopPoly = false;
             EAGLE_DATA.board.signals.forEach(sig => {
                 if (sig.polygons) {
                     sig.polygons.forEach(poly => {
                         if (poly.layer === 1) {
+                            hasTopPoly = true;
                             var el = createSvgPolygon(poly, "pcb-poly-top layer-1");
-                            viewport.appendChild(el);
+                            groupTop.appendChild(el);
                             USED_LAYERS.add(1);
                         }
                     });
                 }
             });
 
-            // Capa 16 Bottom Tracks (azul)
-            EAGLE_DATA.board.signals.forEach(sig => {
-                sig.wires.forEach(w => {
-                    if (w.layer === 16) {
-                        var el = createSvgWire(w, "pcb-wire-bottom layer-16");
-                        viewport.appendChild(el);
-                        USED_LAYERS.add(16);
-                    }
-                });
-            });
-
-            // Capa 1 Top Tracks (rojo)
+            // Capa 1 Top Tracks (rojo con halo de aislamiento)
             EAGLE_DATA.board.signals.forEach(sig => {
                 sig.wires.forEach(w => {
                     if (w.layer === 1) {
+                        if (hasTopPoly) {
+                            var halo = createSvgWire(w, "pcb-wire-halo layer-1");
+                            halo.style.strokeWidth = (parseFloat(w.width) + 0.6) + "px";
+                            groupTop.appendChild(halo);
+                        }
                         var el = createSvgWire(w, "pcb-wire-top layer-1");
-                        viewport.appendChild(el);
+                        groupTop.appendChild(el);
                         USED_LAYERS.add(1);
                     }
                 });
@@ -1491,6 +1538,22 @@
                             ].join(" ");
                             outer.setAttribute("points", pts);
                             outer.setAttribute("class", "pcb-pad-thru");
+                        } else if (p.shape === "long") {
+                            var padRot = getRotationAngle(p.rot);
+                            var padLen = diameter * 2.0;
+                            var padW = diameter;
+                            var rCorner = diameter / 2.0;
+                            outer = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+                            outer.setAttribute("x", p.x - padLen / 2.0);
+                            outer.setAttribute("y", -p.y - padW / 2.0);
+                            outer.setAttribute("width", padLen);
+                            outer.setAttribute("height", padW);
+                            outer.setAttribute("rx", rCorner);
+                            outer.setAttribute("ry", rCorner);
+                            outer.setAttribute("class", "pcb-pad-thru");
+                            if (padRot !== 0) {
+                                outer.setAttribute("transform", `rotate(${-padRot}, ${p.x}, ${-p.y})`);
+                            }
                         } else {
                             outer = document.createElementNS("http://www.w3.org/2000/svg", "circle");
                             outer.setAttribute("cx", p.x);
@@ -1820,7 +1883,7 @@
             } else if (preset === 'bottom') {
                 var b = document.getElementById("btnPresetBottom");
                 if (b) b.classList.add("active");
-                viewStates.pcb.flipped = true;
+                viewStates.pcb.flipped = false; // Modo CAD idéntico a EAGLE (para voltear físico, usar botón Voltear)
                 USED_LAYERS.forEach(function(num) {
                     setLayerState(num, bottomLayers.has(num));
                 });
