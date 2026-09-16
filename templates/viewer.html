@@ -426,6 +426,28 @@
             stroke: none !important;
         }
 
+        /* Orígenes de Componentes y Textos (Capas 23 tOrigins y 24 bOrigins) */
+        .pcb-origins {
+            pointer-events: none;
+        }
+        .pcb-origin-cross {
+            pointer-events: none;
+        }
+        .pcb-origin-cross.interactive-part {
+            pointer-events: stroke;
+            cursor: pointer;
+        }
+        .pcb-origin-cross line {
+            stroke-width: 0.1px;
+            stroke-linecap: square;
+        }
+        .pcb-origin-cross.layer-23 line {
+            stroke: #cbd5e1;
+        }
+        .pcb-origin-cross.layer-24 line {
+            stroke: #94a3b8;
+        }
+
         /* Resaltados (Cross-probing) de Alta Fidelidad Vectorial */
         .interactive-part {
             cursor: pointer;
@@ -660,7 +682,8 @@
                         <button class="btn" id="btnPresetTop" onclick="setPcbPreset('top')" title="Cara Superior (Top)">Top</button>
                         <button class="btn" id="btnPresetBottom" onclick="setPcbPreset('bottom')" title="Cara Inferior (Bottom espejado)">Bottom</button>
                     </div>
-                    <button class="btn" id="btnPcbFlip" onclick="togglePcbFlip()" title="Voltear placa horizontalmente (espejo físico)">Voltear 🔄</button>
+                    <button class="btn" id="btnPcbFlip" onclick="togglePcbFlip()" title="Voltear placa horizontalmente (espejo físico) [Tecla F]">Voltear 🔄</button>
+                    <button class="btn active" id="btnOrigins" onclick="toggleOrigins()" title="Mostrar u ocultar cruces de origen (tOrigins / bOrigins) [Tecla O]">+ Orígenes: ON</button>
                     <button class="btn" id="btnRatsnest" onclick="toggleRatsnest()">Ratsnest: OFF</button>
                     <div style="display: inline-flex; border: 1px solid var(--border-color); border-radius: 4px; overflow: hidden; margin: 0 4px;">
                         <button class="btn" onclick="zoomBy('pcb', 1.25)" title="Acercar (+)">+</button>
@@ -790,6 +813,9 @@
                 if (e.target && (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA')) return;
                 if (e.key === 'f' || e.key === 'F') {
                     togglePcbFlip();
+                }
+                if (e.key === 'o' || e.key === 'O') {
+                    toggleOrigins();
                 }
             });
         };
@@ -1776,6 +1802,38 @@
             groupDrills.setAttribute("id", "pcbDrillsGroup");
             viewport.appendChild(groupDrills);
 
+            // 11. Grupo de Orígenes (Capas 23 tOrigins, 24 bOrigins)
+            var groupOrigins = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            groupOrigins.setAttribute("id", "pcbOriginsGroup");
+            groupOrigins.setAttribute("class", "pcb-origins");
+            viewport.appendChild(groupOrigins);
+
+            function createOriginCross(x, y, layerNum, className, dataPart) {
+                USED_LAYERS.add(layerNum);
+                var gCross = document.createElementNS("http://www.w3.org/2000/svg", "g");
+                var cls = "pcb-origin-cross layer-" + layerNum;
+                if (className) cls += " " + className;
+                gCross.setAttribute("class", cls);
+                if (dataPart) gCross.setAttribute("data-part", dataPart);
+                
+                var arm = 0.5;
+                var l1 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                l1.setAttribute("x1", x - arm);
+                l1.setAttribute("y1", -y);
+                l1.setAttribute("x2", x + arm);
+                l1.setAttribute("y2", -y);
+
+                var l2 = document.createElementNS("http://www.w3.org/2000/svg", "line");
+                l2.setAttribute("x1", x);
+                l2.setAttribute("y1", -y - arm);
+                l2.setAttribute("x2", x);
+                l2.setAttribute("y2", -y + arm);
+
+                gCross.appendChild(l1);
+                gCross.appendChild(l2);
+                return gCross;
+            }
+
             // Vías de señales (Capa 18 - Amarillo puro EAGLE)
             EAGLE_DATA.board.signals.forEach(sig => {
                 sig.vias.forEach(v => {
@@ -1908,6 +1966,11 @@
                         }
 
                         targetGroup.appendChild(text);
+
+                        // Cruz de origen para texto plano (Capa 23 tOrigins o 24 bOrigins)
+                        var textOriginLayer = (item.layer === 16 || item.layer === 22 || item.layer === 24 || item.layer === 26 || item.layer === 28 || item.layer === 52 || (item.rot && item.rot.includes('M'))) ? 24 : 23;
+                        var textOriginCross = createOriginCross(item.x, item.y, textOriginLayer);
+                        groupOrigins.appendChild(textOriginCross);
                     }
                 });
             }
@@ -1952,6 +2015,9 @@
 
                 var silkLayerNum = mirrored ? 22 : 21;
                 var nameLayerNum = mirrored ? 26 : 25;
+                var elemOriginLayer = mirrored ? 24 : 23;
+                var elemOriginCross = createOriginCross(elem.x, elem.y, elemOriginLayer, "interactive-part", elem.name);
+                groupOrigins.appendChild(elemOriginCross);
 
                 if (pkg) {
                     // SMD Pads con roundness respetado y aislamiento
@@ -2227,6 +2293,10 @@
                         if (attr.size) attrText.style.fontSize = `${attr.size}px`;
                         attrText.textContent = val;
                         groupText.appendChild(attrText);
+
+                        var attrOriginLayer = (aLayerNum === 16 || aLayerNum === 22 || aLayerNum === 24 || aLayerNum === 26 || aLayerNum === 28 || aLayerNum === 52) ? 24 : 23;
+                        var attrOriginCross = createOriginCross(attr.x, attr.y, attrOriginLayer, "interactive-part-text", elem.name);
+                        groupOrigins.appendChild(attrOriginCross);
                     });
                 } else if (pkg && pkg.texts && pkg.texts.length > 0) {
                     var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -2382,6 +2452,8 @@
                 if (num === 20) return "#475569";
                 if (num === 21 || num === 25) return "var(--pcb-silk)";
                 if (num === 22 || num === 26) return "#cbd5e1";
+                if (num === 23) return "#cbd5e1";
+                if (num === 24) return "#94a3b8";
                 if (num === 44 || num === 45) return "#000000";
                 if (num === 47) return "#f59e0b";
                 if (num === 51 || num === 52) return "#64748b";
@@ -2416,7 +2488,7 @@
                 var colorBox = document.createElement("div");
                 colorBox.setAttribute("class", "layer-color");
                 colorBox.style.backgroundColor = getLayerColor(num, layer.name);
-                if (num === 21 || num === 25 || num === 22 || num === 26) {
+                if (num === 21 || num === 25 || num === 22 || num === 26 || num === 23 || num === 24) {
                     colorBox.style.border = "1px solid var(--border-color)";
                 }
 
@@ -2442,6 +2514,50 @@
             document.querySelectorAll(".layer-" + layerNum).forEach(el => {
                 el.style.display = checked ? "" : "none";
             });
+            if (layerNum === 23 || layerNum === 24) {
+                updateOriginsBtnState();
+            }
+        }
+
+        var originsVisible = true;
+
+        function updateOriginsBtnState() {
+            var chk23 = document.getElementById("chkLayer23");
+            var chk24 = document.getElementById("chkLayer24");
+            var btn = document.getElementById("btnOrigins");
+            if (!btn) return;
+            var anyOn = (chk23 && chk23.checked) || (chk24 && chk24.checked);
+            originsVisible = anyOn;
+            btn.innerText = "+ Orígenes: " + (originsVisible ? "ON" : "OFF");
+            if (originsVisible) btn.classList.add("active");
+            else btn.classList.remove("active");
+        }
+
+        function toggleOrigins() {
+            originsVisible = !originsVisible;
+            var btn = document.getElementById("btnOrigins");
+            if (btn) {
+                btn.innerText = "+ Orígenes: " + (originsVisible ? "ON" : "OFF");
+                if (originsVisible) btn.classList.add("active");
+                else btn.classList.remove("active");
+            }
+            if (originsVisible) {
+                var isTopPreset = document.getElementById("btnPresetTop") && document.getElementById("btnPresetTop").classList.contains("active");
+                var isBottomPreset = document.getElementById("btnPresetBottom") && document.getElementById("btnPresetBottom").classList.contains("active");
+                if (isTopPreset) {
+                    setLayerState(23, true);
+                    setLayerState(24, false);
+                } else if (isBottomPreset) {
+                    setLayerState(23, false);
+                    setLayerState(24, true);
+                } else {
+                    setLayerState(23, true);
+                    setLayerState(24, true);
+                }
+            } else {
+                setLayerState(23, false);
+                setLayerState(24, false);
+            }
         }
 
         var autoCenterEnabled = false;
@@ -2834,6 +2950,7 @@
                     setLayerState(num, true);
                 });
             }
+            updateOriginsBtnState();
             updatePcbTransform();
         }
 
