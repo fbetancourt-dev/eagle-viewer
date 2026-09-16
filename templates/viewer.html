@@ -1870,8 +1870,6 @@
                     }
                     else if (item.type === "text") {
                         var text = document.createElementNS("http://www.w3.org/2000/svg", "text");
-                        var tAngle = getRotationAngle(item.rot);
-                        var tMirrored = isMirrored(item.rot);
 
                         var isCopper = (item.layer === 1 || item.layer === 16);
                         var targetGroup = groupText;
@@ -1885,17 +1883,8 @@
                             text.style.fontSize = `${item.size}px`;
                         }
 
-                        if (tMirrored) {
-                            text.setAttribute("x", "0");
-                            text.setAttribute("y", "0");
-                            text.setAttribute("transform", `translate(${item.x}, ${-item.y}) scale(-1, 1) rotate(${tAngle})`);
-                        } else {
-                            text.setAttribute("x", item.x);
-                            text.setAttribute("y", -item.y);
-                            if (tAngle !== 0) {
-                                text.setAttribute("transform", `rotate(${-tAngle}, ${item.x}, ${-item.y})`);
-                            }
-                        }
+                        applyEagleTextTransform(text, item.x, item.y, item.rot);
+                        text.textContent = item.text;
 
                         // Si es texto en plano de cobre (como UNO TH Rev3e en Capa 16) y hay polígono, crear halo de aislamiento
                         if (item.layer === 16 && hasBottomPoly) {
@@ -1905,6 +1894,7 @@
                             haloText.style.strokeWidth = "0.5px";
                             haloText.style.fill = "#000000";
                             haloText.style.strokeLinejoin = "round";
+                            haloText.textContent = item.text;
                             groupBottom.appendChild(haloText);
                         } else if (item.layer === 1 && hasTopPoly) {
                             var haloText = text.cloneNode(true);
@@ -1913,10 +1903,10 @@
                             haloText.style.strokeWidth = "0.5px";
                             haloText.style.fill = "#000000";
                             haloText.style.strokeLinejoin = "round";
+                            haloText.textContent = item.text;
                             groupTop.appendChild(haloText);
                         }
 
-                        text.textContent = item.text;
                         targetGroup.appendChild(text);
                     }
                 });
@@ -2232,19 +2222,7 @@
                         attrText.setAttribute("data-part", elem.name);
                         USED_LAYERS.add(aLayerNum);
 
-                        var aRot = getRotationAngle(attr.rot);
-                        var aMirrored = isMirrored(attr.rot);
-                        if (aMirrored) {
-                            attrText.setAttribute("x", "0");
-                            attrText.setAttribute("y", "0");
-                            attrText.setAttribute("transform", `translate(${attr.x}, ${-attr.y}) scale(-1, 1) rotate(${aRot})`);
-                        } else {
-                            attrText.setAttribute("x", attr.x);
-                            attrText.setAttribute("y", -attr.y);
-                            if (aRot !== 0) {
-                                attrText.setAttribute("transform", `rotate(${-aRot}, ${attr.x}, ${-attr.y})`);
-                            }
-                        }
+                        applyEagleTextTransform(attrText, attr.x, attr.y, attr.rot);
 
                         if (attr.size) attrText.style.fontSize = `${attr.size}px`;
                         attrText.textContent = val;
@@ -3070,6 +3048,36 @@
 
         function isMirrored(rotStr) {
             return rotStr && rotStr.includes('M');
+        }
+
+        function applyEagleTextTransform(el, x, y, rotStr) {
+            var angle = getRotationAngle(rotStr);
+            var mirrored = isMirrored(rotStr);
+
+            if (mirrored) {
+                el.setAttribute("x", "0");
+                el.setAttribute("y", "0");
+                if (angle === 270) {
+                    el.setAttribute("transform", `translate(${x}, ${-y}) rotate(-90) scale(1, -1)`);
+                    el.setAttribute("text-anchor", "end");
+                } else if (angle === 90) {
+                    el.setAttribute("transform", `translate(${x}, ${-y}) rotate(90) scale(1, -1)`);
+                    el.setAttribute("text-anchor", "start");
+                } else if (angle === 180) {
+                    el.setAttribute("transform", `translate(${x}, ${-y}) scale(-1, 1) rotate(180)`);
+                    el.setAttribute("text-anchor", "end");
+                } else { // 0
+                    el.setAttribute("transform", `translate(${x}, ${-y}) scale(-1, 1)`);
+                    el.setAttribute("text-anchor", "start");
+                }
+            } else {
+                el.setAttribute("x", x);
+                el.setAttribute("y", -y);
+                el.setAttribute("text-anchor", "start");
+                if (angle !== 0) {
+                    el.setAttribute("transform", `rotate(${-angle}, ${x}, ${-y})`);
+                }
+            }
         }
 
         function getPinLength(lenStr) {
