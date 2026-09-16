@@ -248,14 +248,14 @@
             stroke-linecap: round;
             stroke-linejoin: round;
             fill: none;
-            opacity: 0.9;
+            opacity: 1;
         }
         .pcb-wire-bottom {
             stroke: var(--pcb-bottom);
             stroke-linecap: round;
             stroke-linejoin: round;
             fill: none;
-            opacity: 0.9;
+            opacity: 1;
         }
         .pcb-silk-wire {
             stroke: var(--pcb-silk);
@@ -1472,14 +1472,23 @@
             });
 
             // Capa 16 Bottom Tracks
-            EAGLE_DATA.board.signals.forEach(sig => {
-                sig.wires.forEach(w => {
-                    if (w.layer === 16) {
-                        if (hasBottomPoly) {
+            // 1. Halos de aislamiento contra planos de masa (se dibujan debajo de todas las pistas)
+            if (hasBottomPoly) {
+                EAGLE_DATA.board.signals.forEach(sig => {
+                    sig.wires.forEach(w => {
+                        if (w.layer === 16) {
                             var halo = createSvgWire(w, "pcb-wire-halo layer-16");
                             halo.style.strokeWidth = (parseFloat(w.width) + 0.6) + "px";
                             groupBottom.appendChild(halo);
                         }
+                    });
+                });
+            }
+
+            // 2. Pistas de cobre Bottom (se dibujan encima de todos los halos para trazo continuo)
+            EAGLE_DATA.board.signals.forEach(sig => {
+                sig.wires.forEach(w => {
+                    if (w.layer === 16) {
                         var el = createSvgWire(w, "pcb-wire-bottom layer-16");
                         groupBottom.appendChild(el);
                         USED_LAYERS.add(16);
@@ -1510,14 +1519,23 @@
             });
 
             // Capa 1 Top Tracks
-            EAGLE_DATA.board.signals.forEach(sig => {
-                sig.wires.forEach(w => {
-                    if (w.layer === 1) {
-                        if (hasTopPoly) {
+            // 1. Halos de aislamiento contra planos de masa (se dibujan debajo de todas las pistas)
+            if (hasTopPoly) {
+                EAGLE_DATA.board.signals.forEach(sig => {
+                    sig.wires.forEach(w => {
+                        if (w.layer === 1) {
                             var halo = createSvgWire(w, "pcb-wire-halo layer-1");
                             halo.style.strokeWidth = (parseFloat(w.width) + 0.6) + "px";
                             groupTop.appendChild(halo);
                         }
+                    });
+                });
+            }
+
+            // 2. Pistas de cobre Top (se dibujan encima de todos los halos para trazo continuo)
+            EAGLE_DATA.board.signals.forEach(sig => {
+                sig.wires.forEach(w => {
+                    if (w.layer === 1) {
                         var el = createSvgWire(w, "pcb-wire-top layer-1");
                         groupTop.appendChild(el);
                         USED_LAYERS.add(1);
