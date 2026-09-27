@@ -772,16 +772,18 @@
             styleEl.textContent = rules.join("\n");
         }
 
-        // Índices O(1) para resolución instantánea y cero barridos DOM
+        // Indices for O(1) instant resolution and zero DOM scans
         var boardElementsMap = new Map();
         var schematicInstancesMap = new Map();
         var partDomElementsMap = new Map();
+        var sheetDomCache = new Map();
         var activeHighlightedElements = [];
 
         function buildDataIndices() {
             boardElementsMap.clear();
             schematicInstancesMap.clear();
             partDomElementsMap.clear();
+            sheetDomCache.clear();
             activeHighlightedElements = [];
 
             if (EAGLE_DATA.board && EAGLE_DATA.board.elements) {
@@ -856,6 +858,7 @@
         }
 
         function changeSheet(idx) {
+            clearSelection();
             currentSheetIndex = parseInt(idx, 10);
             renderSchematic();
             resetZoom('sch');
@@ -864,6 +867,7 @@
         function prevSheet() {
             var sheets = (EAGLE_DATA.schematic && EAGLE_DATA.schematic.sheets) ? EAGLE_DATA.schematic.sheets : [];
             if (sheets.length <= 1) return;
+            clearSelection();
             currentSheetIndex = (currentSheetIndex - 1 + sheets.length) % sheets.length;
             document.getElementById("sheetSelect").value = currentSheetIndex;
             renderSchematic();
@@ -873,6 +877,7 @@
         function nextSheet() {
             var sheets = (EAGLE_DATA.schematic && EAGLE_DATA.schematic.sheets) ? EAGLE_DATA.schematic.sheets : [];
             if (sheets.length <= 1) return;
+            clearSelection();
             currentSheetIndex = (currentSheetIndex + 1) % sheets.length;
             document.getElementById("sheetSelect").value = currentSheetIndex;
             renderSchematic();
@@ -1172,27 +1177,52 @@
 
         function renderSchematic() {
             var viewport = document.getElementById("schViewport");
+            if (!viewport) return;
             clearSheetDomReferences();
-            
-            var activeSheet = getActiveSheet();
-            var fragment = document.createDocumentFragment();
 
-            // 1. Crear las capas principales estructuradas en orden de apilamiento (z-index)
+            // Instant swap if sheet container is already cached in memory
+            if (sheetDomCache.has(currentSheetIndex)) {
+                var cached = sheetDomCache.get(currentSheetIndex);
+                cached.partElements.forEach(function(list, partName) {
+                    for (var i = 0; i < list.length; i++) {
+                        registerPartDomElement(partName, list[i]);
+                    }
+                });
+                viewport.replaceChildren(cached.container);
+                return;
+            }
+
+            var activeSheet = getActiveSheet();
+            var sheetContainer = document.createElementNS("http://www.w3.org/2000/svg", "g");
+            sheetContainer.setAttribute("id", "sch-sheet-" + currentSheetIndex);
+            var sheetPartElements = new Map();
+
+            function recordSheetPartElement(part, el) {
+                registerPartDomElement(part, el);
+                var arr = sheetPartElements.get(part);
+                if (!arr) {
+                    arr = [];
+                    sheetPartElements.set(part, arr);
+                }
+                arr.push(el);
+            }
+
+            // 1. Structure main layers in visual stacking order (z-index)
             var layerFrame = document.createElementNS("http://www.w3.org/2000/svg", "g");
             layerFrame.setAttribute("id", "sch-layer-frame");
-            fragment.appendChild(layerFrame);
+            sheetContainer.appendChild(layerFrame);
             
             var layerComponents = document.createElementNS("http://www.w3.org/2000/svg", "g");
             layerComponents.setAttribute("id", "sch-layer-components");
-            fragment.appendChild(layerComponents);
+            sheetContainer.appendChild(layerComponents);
             
             var layerNets = document.createElementNS("http://www.w3.org/2000/svg", "g");
             layerNets.setAttribute("id", "sch-layer-nets");
-            fragment.appendChild(layerNets);
+            sheetContainer.appendChild(layerNets);
             
             var layerTexts = document.createElementNS("http://www.w3.org/2000/svg", "g");
             layerTexts.setAttribute("id", "sch-layer-texts");
-            fragment.appendChild(layerTexts);
+            sheetContainer.appendChild(layerTexts);
             
             // 2. Renderizar Capa 1: Frame / Plain de la hoja (textos de anotación, tablas, etc.)
             if (activeSheet.plain) {
@@ -1324,7 +1354,7 @@
                 gCompSub.setAttribute("transform", `translate(0, 0)`);
                 gComp.appendChild(gCompSub);
                 layerComponents.appendChild(gComp);
-                registerPartDomElement(inst.part, gComp);
+                recordSheetPartElement(inst.part, gComp);
  
                 // Grupo de texto en capa de textos
                 var gText = document.createElementNS("http://www.w3.org/2000/svg", "g");
@@ -1336,7 +1366,7 @@
                 gTextSub.setAttribute("transform", `translate(0, 0)`);
                 gText.appendChild(gTextSub);
                 layerTexts.appendChild(gText);
-                registerPartDomElement(inst.part, gText);
+                recordSheetPartElement(inst.part, gText);
                 
                 if (sym) {
                     if (sym.frames && sym.frames.length > 0) {
@@ -1576,16 +1606,20 @@
                     gCompSub.appendChild(createOriginCross(0, 0, 0.9));
                 }
                 
-                gComp.onclick = function() {
-                    highlightPart(inst.part, inst.value, 'sch');
-                };
-                gText.onclick = function() {
-                    highlightPart(inst.part, inst.value, 'sch');
-                };
             });
             }
 
-            viewport.replaceChildren(fragment);
+            // Cache rendered sheet (bounded LRU, max 8 sheets)
+            if (sheetDomCache.size >= 8) {
+                var firstKey = sheetDomCache.keys().next().value;
+                sheetDomCache.delete(firstKey);
+            }
+            sheetDomCache.set(currentSheetIndex, {
+                container: sheetContainer,
+                partElements: sheetPartElements
+            });
+
+            viewport.replaceChildren(sheetContainer);
         }
 
         function buildDimensionPath(dimensionWires) {
