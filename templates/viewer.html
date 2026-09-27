@@ -648,6 +648,14 @@
                 opacity: 0;
                 stroke: #0284c7;
             }
+        /* Level of Detail (LOD): dynamically hide microscopic texts and origin crosses at distant zoom */
+        svg.lod-hide-micro .pcb-silk-text,
+        svg.lod-hide-micro .pcb-text-top,
+        svg.lod-hide-micro .pcb-text-bottom {
+            display: none !important;
+        }
+        svg.lod-hide-origins .pcb-origins {
+            display: none !important;
         }
     </style>
     <style id="eagleLayerStyles"></style>
@@ -3094,6 +3102,23 @@
             };
         }
 
+        function updatePcbLod(scale) {
+            var pcbSvg = document.getElementById('pcbSvg');
+            if (!pcbSvg) return;
+            // LOD with hysteresis: hides tiny silkscreen and origin crosses in macro overview,
+            // preventing GPU re-rasterization thrashing while eliminating boundary flicker.
+            if (scale < 1.1) {
+                if (!pcbSvg.classList.contains("lod-hide-micro")) pcbSvg.classList.add("lod-hide-micro");
+            } else if (scale > 1.35) {
+                if (pcbSvg.classList.contains("lod-hide-micro")) pcbSvg.classList.remove("lod-hide-micro");
+            }
+            if (scale < 0.7) {
+                if (!pcbSvg.classList.contains("lod-hide-origins")) pcbSvg.classList.add("lod-hide-origins");
+            } else if (scale > 0.9) {
+                if (pcbSvg.classList.contains("lod-hide-origins")) pcbSvg.classList.remove("lod-hide-origins");
+            }
+        }
+
         function zoomBy(type, factor) {
             var svg = document.getElementById(type + 'Svg');
             if (!svg) return;
@@ -3112,6 +3137,9 @@
             var viewport = document.getElementById(type + 'Viewport');
             var scaleX = (type === 'pcb' && state.flipped) ? -state.scale : state.scale;
             viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+            if (type === 'pcb') {
+                updatePcbLod(state.scale);
+            }
         }
 
         function updatePcbTransform() {
@@ -3120,6 +3148,7 @@
             if (!viewport) return;
             var scaleX = state.flipped ? -state.scale : state.scale;
             viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+            updatePcbLod(state.scale);
             var btnFlip = document.getElementById("btnPcbFlip");
             if (btnFlip) {
                 if (state.flipped) {
@@ -3216,7 +3245,12 @@
                 }).observe(svg);
             }
 
+            function updateLOD() {
+                if (type === "pcb") updatePcbLod(state.scale);
+            }
+
             function updateTransform(immediate) {
+                updateLOD();
                 if (immediate) {
                     var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
                     viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
@@ -3470,6 +3504,9 @@
             var viewport = document.getElementById(type + 'Viewport');
             var scaleX = (type === "pcb" && state.flipped) ? -state.scale : state.scale;
             viewport.setAttribute("transform", "translate(" + state.x + ", " + state.y + ") scale(" + scaleX + ", " + state.scale + ")");
+            if (type === 'pcb') {
+                updatePcbLod(state.scale);
+            }
         }
 
         function getRotationAngle(rotStr) {
