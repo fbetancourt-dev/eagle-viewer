@@ -215,8 +215,6 @@
         /* Desactivación ultra-rápida O(1) de eventos y hit-testing durante navegación (Pan & Zoom) */
         svg.is-navigating {
             user-select: none !important;
-            shape-rendering: optimizeSpeed !important;
-            text-rendering: optimizeSpeed !important;
         }
         svg.is-navigating .interactive-part,
         svg.is-navigating .interactive-part *,
@@ -229,12 +227,6 @@
         body.is-dragging {
             user-select: none !important;
             cursor: grabbing !important;
-        }
-
-        #pcbViewport,
-        #schViewport {
-            transform-origin: 0 0;
-            will-change: transform;
         }
 
         /* Estilos de elementos SVG */
@@ -3389,30 +3381,41 @@
                 }
             });
 
-            // Zoom ultra-fluido y continuo con Rueda y Trackpad mediante rAF
+            // Zoom ágil y fluido estilo CAD profesional (Rueda de mouse y trackpad)
             var wheelNavTimer = null;
             svg.addEventListener('wheel', function(e) {
                 e.preventDefault();
 
-                // Suspender eventos de hover durante ráfagas de zoom para máxima tasa de cuadros
+                // Suspender eventos de hover en componentes interactivos durante ráfagas de zoom
                 if (!svg.classList.contains("is-navigating")) {
                     svg.classList.add("is-navigating");
                 }
                 clearTimeout(wheelNavTimer);
                 wheelNavTimer = setTimeout(function() {
                     svg.classList.remove("is-navigating");
-                }, 100);
+                }, 120);
 
                 var rect = getSvgRect();
                 var mouseX = e.clientX - rect.left;
                 var mouseY = e.clientY - rect.top;
 
-                // Factor exponencial continuo según deltaY (suave y proporcional)
-                var zoomFactor = Math.exp(-e.deltaY * 0.0018);
-                zoomFactor = Math.max(0.75, Math.min(zoomFactor, 1.35));
+                // Normalización de delta según deltaMode (0=pixel, 1=line, 2=page)
+                var dy = e.deltaY;
+                if (e.deltaMode === 1) { // Rueda de mouse física en Linux/X11/Wayland (3 líneas por notch)
+                    dy *= 28;
+                } else if (e.deltaMode === 2) {
+                    dy *= 420;
+                }
+
+                // Paso de zoom rápido y sensible (1.28x - 1.31x por notch estilo CAD)
+                var zoomFactor = Math.exp(-dy * 0.0032);
+                zoomFactor = Math.max(0.40, Math.min(zoomFactor, 2.2));
 
                 var oldScale = state.scale;
-                var newScale = Math.max(0.05, Math.min(state.scale * zoomFactor, 80));
+                var newScale = Math.max(0.05, Math.min(state.scale * zoomFactor, 100));
+
+                // Salir temprano si ya se alcanzó el límite mínimo o máximo de zoom
+                if (Math.abs(newScale - oldScale) < 0.0001) return;
 
                 state.scale = newScale;
                 state.x = mouseX - (mouseX - state.x) * (newScale / oldScale);
