@@ -159,6 +159,12 @@ Examples:
         help="Generate viewer and exports without opening default web browser."
     )
     parser.add_argument(
+        "--browser",
+        type=str,
+        default=None,
+        help="Specify browser to open the viewer (e.g. 'firefox', 'chrome'). Defaults to firefox if available to avoid conflicting with assistant CDP Chrome."
+    )
+    parser.add_argument(
         "--json-only",
         action="store_true",
         help="Print parsed circuit topology JSON to stdout and exit."
@@ -360,8 +366,33 @@ def main():
     if not args.no_open:
         abs_output = os.path.abspath(output_path)
         file_url = f"file://{abs_output}"
-        print(f"-> Opening viewer in default browser: {file_url}")
-        webbrowser.open(file_url)
+        
+        target_browser = args.browser or os.environ.get("EAGLE_VIEWER_BROWSER")
+        opened = False
+
+        if target_browser:
+            try:
+                b = webbrowser.get(target_browser)
+                print(f"-> Opening viewer in {target_browser}: {file_url}")
+                b.open(file_url)
+                opened = True
+            except Exception:
+                pass
+
+        if not opened:
+            # Default to firefox to avoid interfering with dedicated Chrome CDP sessions
+            firefox_bin = shutil.which("firefox")
+            if firefox_bin:
+                try:
+                    subprocess.Popen([firefox_bin, file_url], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                    print(f"-> Opening viewer in Firefox (isolated): {file_url}")
+                    opened = True
+                except Exception:
+                    pass
+
+        if not opened:
+            print(f"-> Opening viewer in default browser: {file_url}")
+            webbrowser.open(file_url)
 
 
 if __name__ == "__main__":
